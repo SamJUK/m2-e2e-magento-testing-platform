@@ -1,0 +1,83 @@
+{
+  "contact": "/contact",
+  "account": {
+    "overview": "/customer/account/",
+    "register": "/customer/account/create/",
+    "login": "/customer/account/login/",
+    "loginSuccess": "/customer/account/",
+    "logoutSuccess": "/customer/account/logoutSuccess/",
+    "forgotPassword": "/customer/account/forgotpassword/",
+    "addressBook": "/customer/address/",
+    "addressNew": "/customer/address/new/",
+    "orderHistory": "/sales/order/history/",
+    "changePasswordComment": "The account-edit form with the change-password box already ticked. The plain edit form renders the three password fields hidden, so the tests would have nothing to fill.",
+    "changePassword": "/customer/account/edit/changepass/1/",
+    "editAccountComment": "The account-edit form. There is deliberately no changeEmail variant of it: Magento's Account\\Edit controller honours a `changepass` parameter and has no equivalent for email, so the change-email box is ticked by the page object instead.",
+    "editAccount": "/customer/account/edit/",
+    "newsletter": "/newsletter/manage/"
+  },
+  "products": {
+    "simpleProduct": "/joust-duffle-bag.html",
+    "secondaryProductComment": "A second, different in-stock product PDP. Must match fixtures.product.secondaryProductTitle.",
+    "secondaryProduct": "/fusion-backpack.html",
+    "configurableProduct": "/olivia-1-4-zip-light-jacket.html",
+    "outOfStockProductComment": "PDP of the product the seed keeps out of stock. Must match fixtures.product.outOfStock.urlKey plus the store's catalog/seo/product_url_suffix.",
+    "outOfStockProduct": "/e2e-out-of-stock.html",
+    "adminEditableProductComment": "PDP of the product the admin edit-and-save test renames. Must match fixtures.product.adminEditable.urlKey plus the store's catalog/seo/product_url_suffix. Renaming a product does not regenerate its URL key, so this stays valid while the test holds the temporary name.",
+    "adminEditableProduct": "/e2e-admin-edit.html",
+    "virtualProductComment": "PDP of the virtual product the seed creates. Must match fixtures.product.virtual.urlKey plus the store's catalog/seo/product_url_suffix.",
+    "virtualProduct": "/e2e-virtual.html",
+    "bundleProductComment": "PDP of the bundle the seed creates. Must match fixtures.product.bundle.urlKey plus the store's catalog/seo/product_url_suffix.",
+    "bundleProduct": "/e2e-bundle.html"
+  },
+  "notFoundComment": "A URL guaranteed not to resolve, used to prove the store still serves its 404 page.",
+  "notFound": "/e2e-no-such-page-here",
+  "categories": {
+    "listingPage": "/women/tops-women/jackets-women.html",
+    "pagedListingPageComment": "A category listing with MORE visible products than `inputs.category.listingPage.resultsPerPage`, so the limiter can actually reach that tile count and the pager has a second page to go to. `listingPage` above is deliberately a small category (it exists to be filtered), which is why these two are separate slugs.",
+    "pagedListingPage": "/women/tops-women.html"
+  },
+  "guestOrderLookupComment": "Orders and Returns. The only route a guest has to an order they placed without an account.",
+  "guestOrderLookup": "/sales/guest/form/",
+  "cart": "/checkout/cart/",
+  "checkout": "/checkout/",
+  "wishlist": "/wishlist/",
+  "compare": "/catalog/product_compare/index/",
+  "admin": {
+    "config": "/admin/system_config/index",
+    "cache": "/admin/cache/",
+    "products": {
+      "grid": "/catalog/product/"
+    },
+    "customers": {
+      "grid": "/customer/index/"
+    },
+    "cmsBlocks": {
+      "grid": "/cms/block/",
+      "edit": "/cms/block/edit/block_id/1/",
+      "new": "/cms/block/new/"
+    },
+    "cmsPages": {
+      "grid": "/cms/page/",
+      "edit": "/cms/page/edit/page_id/1/",
+      "new": "/cms/page/new/"
+    },
+    "cartPriceRules": {
+      "grid": "/sales_rule/promo_quote/",
+      "new": "/sales_rule/promo_quote/new/"
+    },
+    "reviews": {
+      "gridComment": "Marketing > Reviews. Deliberately the ALL-reviews grid rather than /review/product/pending/: the pending grid would make 'the review is awaiting moderation' true by construction, while filtering the full grid and reading the Status column back proves it.",
+      "grid": "/review/product/index/"
+    },
+    "orders": {
+      "grid": "/sales/order/",
+      "newComment": "The Create New Order entry point. `order_create/start` clears any half-built order left in the admin session and redirects to the form, so a test never inherits another run's quote.",
+      "new": "/sales/order_create/start/"
+    }
+  },
+  "search": {
+    "startingPage": "/",
+    "resultsPagePrefix": "/catalogsearch/result"
+  }
+}

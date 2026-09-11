@@ -1,0 +1,255 @@
+{
+  "admin_email": "owner@example.com",
+  "validationComment": "Copy the storefront shows when a form field is rejected client-side. Luma renders it in a `.mage-error` div; Hyva's own validator renders it in a `ul.messages li`. `%s` is substituted with the field's own label for themes that name the field in the message - Hyva says \"City field is required.\" while Luma says the same sentence for every field, so the core value simply carries no placeholder.",
+  "validation": {
+    "requiredFieldText": "This is a required field."
+  },
+  "notFound": {
+    "headingText": "Whoops, our bad..."
+  },
+  "newsletter": {
+    "notificationText": "Thank you for your subscription",
+    "mail": {
+      "subject": "Newsletter subscription success"
+    }
+  },
+  "contact": {
+    "notificationText": "Thanks for contacting us with your comments and questions. We'll respond to you very soon.",
+    "invalidEmailTextComment": "Rejection copy for a malformed address. Only themes that run a JS validator (Luma) render it; Hyva's contact form leaves the check to the browser, so its page object asserts the input's own validity state instead.",
+    "invalidEmailText": "Please enter a valid email address (Ex: johndoe@domain.com).",
+    "mail": {
+      "subject": "Contact Form"
+    }
+  },
+  "account": {
+    "register": {
+      "notificationText": "Thank you for registering with Main Website Store.",
+      "mail": {
+        "subject": "Welcome to Main Website Store"
+      },
+      "duplicateEmailText": "There is already an account with this email address."
+    },
+    "changePassword": {
+      "notificationText": "You saved the account information."
+    },
+    "editAccountComment": "Magento words the confirmation the same for a profile save and for a password change. Separate keys so a store can retranslate one without the other.",
+    "editAccount": {
+      "notificationText": "You saved the account information."
+    },
+    "newsletter": {
+      "subscribedText": "We have saved your subscription.",
+      "unsubscribedText": "We have removed your newsletter subscription."
+    },
+    "forgotPassword": {
+      "notificationText": "If there is an account associated with %s you will receive an email with a link to reset your password.",
+      "mail": {
+        "subject": "Reset your Main Website Store password"
+      }
+    },
+    "resetPassword": {
+      "notificationText": "You updated your password."
+    },
+    "logout": {
+      "notificationText": "You are signed out"
+    },
+    "login": {
+      "invalidCredentialsText": "The account sign-in was incorrect or your account is disabled temporarily. Please wait and try again later."
+    },
+    "addressBook": {
+      "savedNotificationText": "You saved the address.",
+      "deletedNotificationText": "You deleted the address.",
+      "confirmationText": "Are you sure you want to delete this address?",
+      "emptyAdditionalText": "You have no other address entries in your address book."
+    },
+    "orderHistory": {
+      "headingText": "My Orders",
+      "emptyText": "You have placed no orders."
+    },
+    "orderView": {
+      "headingText": "Order # %s"
+    }
+  },
+  "product": {
+    "addToCartNotificationTextRegex": "You added .* to your shopping cart.",
+    "simpleProductTitle": "Joust Duffle Bag",
+    "adminOrderableComment": "The product the admin order-creation tests put on their orders. Deliberately a seeded fixture rather than the sample-data simple product: every admin-created order consumes stock, and on a store whose database is never rolled back that quietly drains the one SKU the cart, minicart and checkout tests all add, until they fail with an out-of-stock PDP. The seed rewrites this product's quantity (and clears its inventory reservations) on every run, so the orders these tests place cost nothing permanent. Matched by SKU because the admin's Create New Order product grid filters on SKU and name in separate boxes, and SKU is the one guaranteed to match a single row.",
+    "adminOrderable": {
+      "sku": "e2e-admin-orderable",
+      "urlKey": "e2e-admin-orderable",
+      "title": "E2E Admin Orderable Product",
+      "price": 12.5
+    },
+    "orderedSkusComment": "SKUs the suite places real ORDERS for but does not create. Multi-Source Inventory computes salable quantity as source qty minus reservations, and a reservation is only compensated when its order ships or is cancelled - the suite places orders it never fulfils. On a store whose database is never rolled back those reservations accumulate until the product stops being orderable and every checkout test fails with \"The requested qty is not available\". Measured on a demo store after 95 runs: source qty 93, reservations -93, salable 0. Where the seed is allowed to (the database is restored afterwards, or seed.disposableStore is set) it tops these up and clears their reservations on every run; anywhere else it leaves them alone, because clearing a real store's reservations would release stock that is genuinely committed. Keep this list to products the suite ORDERS - adding to a cart reserves nothing.",
+    "orderedSkus": [
+      "24-MB01"
+    ],
+    "secondaryProductTitleComment": "A second, different in-stock product. The comparison tests need two products on one page, so this must not be `simpleProductTitle` and must match `slugs.products.secondaryProduct`.",
+    "secondaryProductTitle": "Fusion Backpack",
+    "inStockStatusText": "In stock",
+    "adminEditableComment": "A product that exists purely so the admin edit-and-save test has something safe to rename. It must be a product NO other test asserts on: the rename is briefly visible store-wide, so pointing this at a shared SKU (the simple product, or the out-of-stock one) would race any suite running at more than one worker. The seed creates it and rewrites `title` and `price` on every run (see seed/fixture-entities.ts), which is also what repairs the product if a run is killed between the rename and the restore. A store that would rather donate an existing throwaway SKU can re-point these and set `seed.createFixtureEntities: false`.",
+    "adminEditable": {
+      "sku": "e2e-admin-edit",
+      "urlKey": "e2e-admin-edit",
+      "title": "E2E Admin Edit Product",
+      "price": 24.99
+    },
+    "outOfStockComment": "A deterministic out-of-stock product. The seed creates it (see seed/fixture-entities.ts) rather than relying on a sample-data SKU happening to be unsellable; `sku`, `urlKey`, `title` and `price` are what the seed writes, so overriding them here points BOTH the seed and the tests at a different product. A store that already has a permanently out-of-stock SKU can point these at it and set `seed.createFixtureEntities: false`.",
+    "outOfStock": {
+      "sku": "e2e-out-of-stock",
+      "urlKey": "e2e-out-of-stock",
+      "title": "E2E Out Of Stock Product",
+      "price": 19.99,
+      "statusText": "Out of stock"
+    },
+    "breadcrumbTrailComment": "The breadcrumb trail a PDP renders, outermost first. Magento's stock breadcrumb for a product reached by its own URL is Home + the product name; a store whose theme injects the product's category as well lists it here.",
+    "breadcrumbTrail": [
+      "Home",
+      "Joust Duffle Bag"
+    ],
+    "virtualComment": "A virtual product, seeded because nothing in Magento's sample data is one and a virtual-only cart is a whole branch of checkout the simple-product path never reaches: no shipping step, no rate list, no shipping address form, and the billing address rendered inside the payment block instead. `sku`, `urlKey`, `title` and `price` are what the seed writes, so overriding them re-points the seed and the tests together. A store with its own permanent virtual SKU can point these at it and set `seed.createFixtureEntities: false`.",
+    "virtual": {
+      "sku": "e2e-virtual",
+      "urlKey": "e2e-virtual",
+      "title": "E2E Virtual Product",
+      "price": 9.99
+    },
+    "bundleComment": "A deterministic bundle product. The seed creates it, and the two simple products it bundles, on every run (see seed/fixture-entities.ts) rather than relying on a sample-data SKU: it is a FIXED-price bundle, so the PDP price is exactly `basePrice` plus the selected option's own price and both figures are asserted as numbers, not as 'it changed'. Overriding these re-points the seed and the tests together; a store with its own permanent bundle can point them at it and set `seed.createFixtureEntities: false`. `defaultSelection.price` is deliberately 0 - Hyva's bundle price component seeds itself from the PRE-CONFIGURED price (base + default selection) and then adds the newly chosen selection on top, so a non-zero default is counted twice on that theme and the PDP disagrees with the cart. Keeping it at 0 makes both themes agree with the server; a store raising it must confirm its theme adds it once.",
+    "bundle": {
+      "sku": "e2e-bundle",
+      "urlKey": "e2e-bundle",
+      "title": "E2E Bundle Product",
+      "basePrice": 50,
+      "optionTitle": "E2E Bundle Choice",
+      "defaultSelection": {
+        "sku": "e2e-bundle-part-a",
+        "title": "E2E Bundle Part A",
+        "price": 0
+      },
+      "alternateSelection": {
+        "sku": "e2e-bundle-part-b",
+        "title": "E2E Bundle Part B",
+        "price": 25
+      }
+    }
+  },
+  "wishlistComment": "Magento words the wishlist confirmation differently per theme - Luma names the product ('<name> has been added to your Wish List.'), Hyva does not ('Product has been added to your Wish List.') - so the shared value is the substring both contain. The real proof is the wishlist page itself, which the tests read back off the server; this string only confirms the click was accepted.",
+  "wishlist": {
+    "addedNotificationText": "has been added to your Wish List"
+  },
+  "reviewComment": "Magento holds every new review for moderation, on both themes and via both submission paths (Luma posts the form, Hyva sends a createProductReview GraphQL mutation) - so the storefront copy below is an acceptance receipt, not evidence. `moderationStatusText` is the status the admin review grid must then show for it; a store running an auto-approval extension sets this to its own approved label.",
+  "review": {
+    "submittedNotificationText": "You submitted your review for moderation.",
+    "moderationStatusText": "Pending"
+  },
+  "cart": {
+    "emptyText": "You have no items in your shopping cart.",
+    "couponComment": "A deterministic cart price rule. The seed creates/updates a percent-off rule named `ruleName` carrying `code` (see seed/fixture-entities.ts), so overriding `code`/`percent`/`ruleName` here re-points both the seed and the tests. A store with its own permanent test coupon can point `code`/`percent` at it and set `seed.createFixtureEntities: false`. `invalidCode` must be a code that exists nowhere in the store.",
+    "coupon": {
+      "ruleName": "E2E Percent Off",
+      "code": "E2ETEST10",
+      "invalidCode": "E2E-NOT-A-COUPON",
+      "percent": 10,
+      "appliedNotificationText": "You used coupon code \"%s\".",
+      "removedNotificationText": "You canceled the coupon code.",
+      "invalidNotificationText": "The coupon code \"%s\" is not valid."
+    }
+  },
+  "category": {
+    "listingPage": {
+      "layeredNavigation": {
+        "filterName": "Material",
+        "filterValue": "Wool"
+      },
+      "secondLayeredNavigationComment": "A SECOND facet, used to prove two filters combine. It has to narrow the result of `layeredNavigation` further and still leave at least one product, or the test cannot tell a working intersection from an empty one. On the stock sample data the Jackets listing goes 12 tiles, then 2 for Material/Wool, then 1 once Style/Insulated is added.",
+      "secondLayeredNavigation": {
+        "filterName": "Style",
+        "filterValue": "Insulated"
+      },
+
+      "currencySymbolAfterSwitch": "€",
+      "breadcrumbTrailComment": "The breadcrumb trail `slugs.categories.listingPage` renders, outermost first. Asserted in full rather than by its last entry, so a theme that silently stops rendering the intermediate categories still fails.",
+      "breadcrumbTrail": [
+        "Home",
+        "Women",
+        "Tops",
+        "Jackets"
+      ]
+    }
+  },
+  "admin": {
+    "cmsblocks": {
+      "confirmationText": "Are you sure you want to do this?",
+      "savedNotificationText": "You saved the block.",
+      "deletedNotificationText": "You deleted the block.",
+      "blockTitle": "Home Main Banner"
+    },
+    "cmspages": {
+      "confirmationText": "Are you sure you want to do this?",
+      "savedNotificationText": "You saved the page.",
+      "deletedNotificationText": "The page has been deleted.",
+      "pageTitle": "Home page"
+    },
+    "cartPriceRules": {
+      "savedNotificationText": "You saved the rule.",
+      "confirmationText": "Are you sure you want to delete this?",
+      "deletedNotificationText": "You deleted the rule.",
+      "missingNotificationText": "This rule no longer exists.",
+      "couponTypes": {
+        "none": "No Coupon",
+        "specific": "Specific Coupon"
+      }
+    },
+    "cache": {
+      "headingText": "Cache Management"
+    },
+    "products": {
+      "searchTerm": "Joust Duffle Bag",
+      "savedNotificationText": "You saved the product."
+    },
+    "orders": {
+      "createComment": "Creating an order from the admin. `paymentMethodCode` is the offline method the seed enables (payment/checkmo/active), matched on the radio's value rather than its label so the assertion survives a retitled method. `orderNumberPattern` only has to be tight enough to reject the empty string and the bare `#` the heading would show if no order were produced - the real proof that the number is a real order is that it finds exactly one row in the order grid.",
+      "create": {
+        "createdNotificationText": "You created the order.",
+        "paymentMethodCode": "checkmo",
+        "orderNumberPattern": "^[A-Za-z0-9][A-Za-z0-9_-]{4,}$"
+      },
+      "statusComment": "Order status transitions. A freshly created order sits in the `new` state, whose only assigned status is Pending, so the comment form's status dropdown cannot express a change - Hold is the transition core Magento actually offers here, and it is reversible, which is what lets the test leave the order as it found it.",
+      "status": {
+        "pendingText": "Pending",
+        "onHoldText": "On Hold",
+        "heldNotificationText": "You put the order on hold.",
+        "releasedNotificationText": "You released the order from holding status."
+      },
+      "invoice": {
+        "createdNotificationText": "The invoice has been created.",
+        "mail": {
+          "subject": "Invoice for your Main Website Store order"
+        }
+      },
+      "shipment": {
+        "createdNotificationText": "The shipment has been created.",
+        "mail": {
+          "subject": "Your Main Website Store order has shipped"
+        }
+      }
+    }
+  },
+  "search": {
+    "resultsPageTitle": "Search results for: '%s'",
+    "expectedProductTitle": "Joust Duffle Bag",
+    "noResultsTextComment": "What the results page says when nothing matched. Magento's own copy, rendered by both stock themes in the same `.message.notice`. A store running a search SaaS (Klevu, Algolia) that renders its own empty state re-points this and `selectors.search.noResultsMessageSelector` together.",
+    "noResultsText": "Your search returned no results."
+  },
+  "checkout": {
+    "requiredFieldTextComment": "The message Magento's Knockout checkout renders for an empty required field. Deliberately separate from `validation.requiredFieldText`: that one is the theme's own form validator, which Hyva words differently, while the checkout is the same Knockout app on both stock themes (Hyva ships hyva-themes/magento2-luma-checkout) and always says this.",
+    "requiredFieldText": "This is a required field.",
+    "success": {
+      "headingText": "Thank you for your purchase!",
+      "orderNumberText": "Your order # is:",
+      "orderNumberTextRegex": "Your order (#|number) is:"
+    },
+    "mail": {
+      "subject": "Your Main Website Store order confirmation"
+    }
+  }
+}

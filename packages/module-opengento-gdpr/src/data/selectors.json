@@ -1,0 +1,22 @@
+{
+  "gdpr": {
+    "privacyBlockSelector": ".block-privacy-info",
+    "exportLinkSelector": "#export",
+    "eraseLinkSelector": "#delete",
+    "undoEraseButtonSelector": "#undo_deletion",
+    "erasePasswordFieldSelector": "#password",
+    "eraseSubmitButtonSelector": "#erase",
+    "confirmModalButtonSelectorComment": "Magento's own confirm modal, not a browser dialog: the erase template binds a click handler that opens it and only submits on accept.",
+    "confirmModalButtonSelector": ".modal-popup footer button.action-primary",
+    "messageSelector": "#maincontent .message",
+    "accountNavLinkLabel": "Privacy Settings",
+    "registerForm": {
+      "firstNameFieldSelector": "input[name='firstname']",
+      "lastNameFieldSelector": "input[name='lastname']",
+      "emailFieldSelector": "input[name='email']",
+      "passwordFieldSelector": "input[name='password']",
+      "passwordConfirmFieldSelector": "input[name='password_confirmation']",
+      "submitButtonSelector": "button[type='submit']"
+    }
+  }
+}

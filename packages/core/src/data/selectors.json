@@ -1,0 +1,451 @@
+{
+  "header": {
+    "links": {
+    }
+  },
+  "validationComment": "Where a theme renders the per-field rejection message produced by its form validator. Luma uses jQuery validation (`div.mage-error`); Hyva's own validator appends `<li>` entries to a `ul.messages` inside the field wrapper, so the Hyva layer overrides this.",
+  "validation": {
+    "fieldErrorSelector": ".mage-error"
+  },
+  "contactPage": {
+    "formSelector": "#contact-form",
+    "nameFieldLabel": "Name",
+    "emailFieldLabel": "Email",
+    "telephoneFieldLabel": "Phone Number",
+    "messageFieldLabel": "What\u2019s on your mind?",
+    "submitButtonLabel": "Submit"
+  },
+  "registerPage": {
+    "firstNameFieldLabel": "First Name",
+    "lastNameFieldLabel": "Last Name",
+    "emailFieldLabel": "Email",
+    "passwordFieldLabel": "Password",
+    "confirmPasswordFieldLabel": "Confirm Password",
+    "submitButtonLabel": "Create an Account"
+  },
+  "loginPageComment": "formSelector: Luma renders TWO elements with id=\"login-form\" on the login page - the real form, and the Knockout authentication popup the header ships on every page. Only the real one carries an `action`, so the attribute is what disambiguates them; without it every locator scoped to the form is a strict-mode violation waiting to happen.",
+  "loginPage": {
+    "formSelector": "#login-form[action]",
+    "emailFieldLabel": "Email",
+    "passwordFieldTitle": "Password",
+    "signInButtonLabel": "Sign In"
+  },
+  "forgotPasswordPage": {
+    "emailFieldLabel": "Email",
+    "submitButtonLabel": "Reset My Password"
+  },
+  "accountOverviewPage": {
+    "accountInformationBlock": ".block-dashboard-info",
+    "logoutButtonLabel": "Sign Out",
+    "customerMenuSelector": ".header.links",
+    "customerMenuTriggerLabel": "Change",
+    "addressBlockSelectorComment": "The dashboard's Address Book block. Asserted as a whole rather than per box: Luma gives each default address a `box-billing-address` / `box-shipping-address` class and Hyva does not, but both render the address inside this block.",
+    "addressBlockSelector": ".block-dashboard-addresses"
+  },
+  "resetPasswordPageComment": "The set-a-new-password form reached from the link in the reset email. The submit control is addressed as the form's own submit button rather than by label: Magento words it \"Set a New Password\" while Hyva's template renders the unrelated \"Save Address\" string (its x-text binding repeats the same mistake), so no single label covers both - and a label match would break again the day Hyva fixes theirs.",
+  "resetPasswordPage": {
+    "formSelector": "#form-validate",
+    "newPasswordFieldLabel": "New Password",
+    "confirmPasswordFieldLabel": "Confirm New Password",
+    "submitButtonSelector": "button[type=\"submit\"]"
+  },
+  "accountEditPageComment": "The account-edit form, reached with the change-password box already ticked. Field labels come from Magento_Customer, so a theme keeping the stock template needs no override.",
+  "accountEditPage": {
+    "formSelector": "#form-validate",
+    "firstNameFieldLabel": "First Name",
+    "lastNameFieldLabel": "Last Name",
+    "emailFieldLabel": "Email",
+    "changeEmailCheckboxSelectorComment": "Reveals the email and current-password fields. There is no URL parameter for this - Magento honours `changepass` on this route and nothing for email - so the page object ticks the box and then requires the email field to appear.",
+    "changeEmailCheckboxSelector": "#change-email",
+    "currentPasswordFieldLabel": "Current Password",
+    "newPasswordFieldLabel": "New Password",
+    "confirmPasswordFieldLabel": "Confirm New Password",
+    "saveButtonLabel": "Save"
+  },
+  "addressBookPage": {
+    "form": {
+      "firstNameFieldLabel": "First Name",
+      "lastNameFieldLabel": "Last Name",
+      "companyFieldLabel": "Company",
+      "telephoneFieldLabel": "Phone Number",
+      "streetAddressField": "[name=\"street[0]\"]",
+      "countryField": "#country",
+      "regionSelectField": "#region_id",
+      "regionInputField": "#region",
+      "cityFieldLabel": "City",
+      "postcodeFieldLabel": "Zip/Postal Code",
+      "submitButton": "[data-action=\"save-address\"]",
+      "defaultBillingCheckboxSelectorComment": "Magento renders these two only when the address is not already the default, so they exist exactly when there is something to change. Addressed by id: both stock themes keep Magento's own ids while wording the labels through translation.",
+      "defaultBillingCheckboxSelector": "#primary_billing",
+      "defaultShippingCheckboxSelector": "#primary_shipping"
+    },
+    "defaultBillingBlock": ".box-address-billing",
+    "defaultShippingBlock": ".box-address-shipping",
+    "addressEditLinkSelectorComment": "Every stored address is reachable from the address book through a /customer/address/edit/id/<n>/ link, in both the default-address boxes and the additional-addresses list. Counting the DISTINCT ids those links carry is how the suite reads the customer's address count back off the server without depending on either theme's list markup.",
+    "addressEditLinkSelector": "a[href*=\"/customer/address/edit/id/\"]",
+    "changeBillingAddressLinkLabel": "Change Billing Address",
+    "additionalAddressesTable": "#additional-addresses-table",
+    "editLinkLabel": "Edit",
+    "deleteLinkLabel": "Delete",
+    "confirmButtonLabel": "OK"
+  },
+  "orderHistoryPage": {
+    "emptyMessage": ".column.main .message.info.empty",
+    "ordersTable": "#my-orders-table",
+    "viewOrderLinkLabel": "View Order",
+    "reorderLinkLabel": "Reorder"
+  },
+  "guestOrderLookupPageComment": "Magento's Orders and Returns form, the only way a guest can reach an order they placed without an account. Both stock themes render Magento_Sales' own guest/form.phtml, so one set of labels covers them. `searchByEmailOptionLabel` is the option text of the `oar_type` select, which stock Magento words the same as the field's own label.",
+  "guestOrderLookupPage": {
+    "formSelector": "#oar-widget-orders-and-returns-form",
+    "orderIdFieldLabel": "Order ID",
+    "lastNameFieldLabel": "Billing Last Name",
+    "searchByFieldLabel": "Find Order By",
+    "searchByEmailOptionLabel": "Email",
+    "emailFieldLabel": "Email",
+    "submitButtonLabel": "Continue"
+  },
+  "orderViewPageComment": "The customer's own view of a placed order. `paymentMethodSelector` is where the order records the method it was paid with - Luma renders Magento's `.box-order-billing-method` box, Hyva drops the class and labels the box with a plain <p>, so the Hyva layer overrides it. Reading the method back here is what turns 'a payment method was selected at checkout' into 'the order was actually recorded against it'. A store running a translated storefront overrides the whole selector, since the Hyva form of it matches on the label's own text.",
+  "orderViewPage": {
+    "printOrderLinkLabelComment": "Opens the printable copy of the order. Magento gives the link target=\"_blank\", so it lands in a new tab and the page object waits for that tab rather than for a navigation.",
+    "printOrderLinkLabel": "Print Order",
+    "paymentMethodSelector": ".box-order-billing-method .box-content"
+  },
+  "productPage": {
+    "quantityFieldLabelComment": "The PDP quantity input's own <label>. Stock Magento (and so Luma) words it \"Qty\"; Hyva labels the same input \"Quantity\" in an sr-only span, which is why the Hyva layer overrides this. Matched exactly and scoped to the add-to-cart form, so a related-product tile's own qty control cannot win it.",
+    "quantityFieldLabel": "Qty",
+    "addToCartButtonLabel": "Add to Cart",
+    "titleSelectorComment": "The PDP heading carrying the product name, used to prove an admin product edit reached the storefront. Both stock themes tag it with Magento's own `data-ui-id` - Luma on a `<span class=\"base\">` inside the `<h1>`, Hyva on the `<h1>` itself - so the two-branch selector resolves to exactly ONE element on either. Restricting both branches to the heading is load-bearing on Hyva: it renders the title a SECOND time as an `aria-hidden` `<div>` carrying the same `data-ui-id` (the `<h1>` is `md:sr-only`, the div is the visible desktop copy), so a bare attribute match finds two. Read with toHaveText/textContent rather than toBeVisible, because the `<h1>` branch is the screen-reader-only one.",
+    "titleSelector": "h1[data-ui-id=\"page-title-wrapper\"], h1 [data-ui-id=\"page-title-wrapper\"]",
+    "priceSelectorComment": "The PDP's own final price. Scoped to `.product-info-main` because related/upsell tiles further down the page render price boxes of their own. Luma tags the amount with Magento's `data-price-type=\"finalPrice\"`; Hyva's Alpine price component drops that attribute on the main product (it keeps it on the listing tiles), so the Hyva layer overrides this. Read as a parsed number, which is what lets the PDP price be compared with the minicart, cart and checkout figures rather than with one store's formatting.",
+    "priceSelector": ".product-info-main [data-price-type=\"finalPrice\"] .price",
+    "stockStatusComment": "Availability indicator on the PDP. Both stock themes render Magento's own `.stock.available` / `.stock.unavailable` pair (Luma as a div, Hyva as a p), so one pair of selectors covers them.",
+    "inStockStatusSelector": ".stock.available",
+    "outOfStockStatusSelector": ".stock.unavailable",
+    "addToWishlistSelectorComment": "PDP wishlist and compare controls. Luma renders anchors (`a.action.towishlist` / `a.action.tocompare`), Hyva icon buttons carrying Magento's own `data-addto` attribute; matching either keeps one selector per control for both themes. Product-list cards further down the PDP render the same controls, so the page object always takes the first match.",
+    "addToWishlistSelector": "[data-addto=\"wishlist\"], a.action.towishlist",
+    "addToCompareSelector": "[data-addto=\"compare\"], a.action.tocompare",
+    "bundleComment": "Bundle PDP. Both stock themes emit Magento's own `bundle-option-<optionId>-<selectionId>` ids and put the selection's product name in a `<label for=...>`, so an option is chosen by NAME rather than by an id the database happens to assign. `summaryPriceSelector` is the live, recalculating price; the price box at the top of the page is the static From/To range and never moves.",
+    "bundle": {
+      "customizeButtonLabel": "Customize and Add to Cart",
+      "optionLabelSelector": "label[for^=\"bundle-option-\"]",
+      "summaryPriceSelector": "#bundleSummary .price-box .price"
+    }
+  },
+  "breadcrumbsComment": "Both stock themes render Magento's breadcrumb block as `.breadcrumbs .items > li`. Hyva prefixes every entry after the first with a `/` separator span, so the page object compares each item's trailing text rather than its exact string.",
+  "breadcrumbs": {
+    "itemSelector": ".breadcrumbs .items li"
+  },
+  "wishlistPage": {
+    "headingText": "My Wish List",
+    "itemSelectorComment": "Wishlist tiles. Both stock themes render Magento's `.products-grid.wishlist` list, so one selector covers them, and the per-item controls are keyed on Magento's own `data-role` attributes rather than on a label the two themes word differently (Luma a titled link, Hyva an icon button with sr-only text).",
+    "itemSelector": ".products-grid.wishlist .product-item",
+    "itemNameSelector": "a.product-item-link",
+    "addToCartSelector": "[data-role=\"tocart\"]",
+    "removeSelector": "[data-role=\"remove\"]"
+  },
+  "comparePageComment": "Comparison table. Luma gives it `id=\"product-comparison\"`; Hyva renders an unidentified `<table>` as the only table in the main column, so the Hyva layer overrides `tableSelector` alone - every other handle below resolves identically inside either table. `removeProductTitle` is the `title` attribute both themes put on the remove control, whose column order matches the product column order.",
+  "comparePage": {
+    "tableSelector": "#product-comparison",
+    "productNameSelector": "strong a",
+    "addToCartFormSelector": "form[data-role=\"tocart-form\"]",
+    "removeProductTitle": "Remove Product",
+    "confirmButtonLabel": "OK"
+  },
+  "reviewFormComment": "Both stock themes ship Magento's own review field ids (`nickname_field`, `summary_field`, `review_field`), so only the rating control differs: Luma gives each radio `id=\"Rating_<n>\"`, Hyva leaves the input unidentified and labels it `\"<n> stars\"`. `%s` is the star count. The radio is visually replaced by a star label in both themes - the labels overlap each other, so a click on the wanted star is intercepted by its neighbour - which is why the page object activates the input through the DOM and then asserts it is actually checked.",
+  "reviewForm": {
+    "tabLabelSelectorComment": "Luma buries the review form in a product tab that starts closed; Hyva has no tabs at all and this matches nothing there, which is why the page object opens it only when it is present and then requires the form's own fields either way. `formSelector` is keyed on the class rather than the id because the two themes spell that id differently (`review-form` vs `review_form`) - and Hyva additionally wraps the form in a DIV carrying Luma's id.",
+    "tabLabelSelector": "#tab-label-reviews-title",
+    "formSelector": "form.review-form",
+    "ratingSelector": "#Rating_%s",
+    "ratingCheckedSelector": "input[name^=\"ratings[\"]:checked",
+    "nicknameFieldSelector": "#nickname_field",
+    "summaryFieldSelector": "#summary_field",
+    "reviewFieldSelector": "#review_field",
+    "submitButtonLabel": "Submit Review"
+  },
+  "categoryPage": {
+    "listingPage": {
+      "sorter": "Sort By",
+      "sortOrderDirectionSelector": "[data-role=\"direction-switcher\"]",
+      "firstProductName": ".product-items .product:first-child .product-item-name",
+      "productPrice": ".column.main .product-items .product-item [data-price-type=\"finalPrice\"] .price",
+      "productItemSelectorComment": "One listing tile. Scoped through `.products.wrapper` because Luma's sidebar renders its compare and wishlist blocks as `.product-items` lists too, so an unscoped tile count silently includes them. Luma's tile is the `<li>`, Hyva's is the add-to-cart `<form>` inside it; both carry `product-item`.",
+      "productItemSelector": ".column.main .products.wrapper .product-item",
+      "productItemNameSelector": "a.product-item-link",
+      "limiterSelectorComment": "Results-per-page control. Luma gives it `id=\"limiter\"` and Hyva does not, but both render Magento's own `limiter-options` class. Themes draw the toolbar twice (top and bottom) with all but one copy hidden, so the page object takes the first visible match.",
+      "limiterSelector": "select.limiter-options",
+      "pagerSelectorComment": "The pager. `pageLinkSelector` is a %s-substituted href match rather than a link label: Luma numbers its links `<span>2</span>` while Hyva labels them `aria-label=\"Page 2\"`, but both point at the same `?p=<n>` URL. The 'next' arrow matches the same href, so the page object takes the first hit.",
+      "pagerSelector": ".pages",
+      "pageLinkSelector": "a[href*=\"p=%s\"]",
+      "layeredNavigation": "[id=\"layered-filter-block\"]",
+      "appliedFilterItem": ".filter-current .item",
+      "appliedFilterLabel": ".filter-label",
+      "appliedFilterValue": ".filter-value",
+    "clearAllFiltersSelectorComment": "The layered navigation's clear-all control. Both stock themes render Magento's own `.filter-actions` block with a single link in it, so this is addressed structurally rather than by its \"Clear All\" wording, which translation changes.",
+    "clearAllFiltersSelector": ".filter-actions a"
+    }
+  },
+  "cart": {
+    "confirmationPopupText": "Are you sure you would like to remove this item from the shopping cart?",
+    "confirmationPopupAccept": "OK",
+    "cartItemSelector": ".cart.item",
+    "emptyMessageSelectorComment": "The empty-cart block. Both stock themes render Magento's own `.cart-empty` wrapper, Hyva through its own php-cart/noItems.phtml. Asserted as a selector AND a message, so a store that renders the wrapper with nothing in it still fails.",
+    "emptyMessageSelector": ".cart-empty",
+    "productRemoveTitle": "Remove item",
+    "productQuantityLabel": "Qty",
+    "productUpdateButtonTitle": "Update Shopping Cart",
+    "unitPriceSelector": "td.col.price .price",
+    "lineTotalSelector": "td.col.subtotal .price",
+    "subtotalSelectorComment": "A store set to display prices both excl. and incl. tax renders TWO subtotal rows (tr.totals.sub.excl and tr.totals.sub.incl); a bare tr.totals.sub matches both and reads the excl. one, which then never equals the tax-inclusive line total. Pin to the incl. row, falling back to the single unqualified row when the store displays only one.",
+  "subtotalSelector": "#cart-totals tr.totals.sub.incl td.amount .price, #cart-totals tr.totals.sub:not(.excl):not(.incl) td.amount .price",
+    "grandTotalSelector": "#cart-totals tr.grand.totals td.amount .price",
+    "couponFormToggleComment": "Magento collapses the coupon form behind a disclosure on both themes (Luma: a collapsible block title, Hyva: a <details> summary). The page object clicks this until the code field is actually visible.",
+    "couponFormToggle": "#block-discount .title",
+    "couponFormSelector": "#discount-coupon-form",
+    "couponFieldSelector": "#coupon_code",
+    "discountBasisSubtotalSelectorComment": "The subtotal the DISCOUNT is calculated from. Normally identical to subtotalSelector, and it defaults to the same value. It exists because a store showing both inc- and exc-VAT prices can render line totals on one basis while Magento computes the coupon discount on the other: one client store displays exc-VAT line totals (so subtotalSelector must point at the exc row for the line-total coherence check) while its discount is a percentage of the inc-VAT subtotal. Pointing the coupon arithmetic here keeps each assertion comparing like with like instead of silently mixing tax bases.",
+  "discountBasisSubtotalSelector": "#cart-totals tr.totals.sub.incl td.amount .price, #cart-totals tr.totals.sub:not(.excl):not(.incl) td.amount .price",
+  "applyCouponButtonLabel": "Apply Discount",
+    "cancelCouponButtonLabel": "Cancel Coupon",
+    "discountTotalSelectorComment": "The discount totals line. Keyed on the coupon-label span Magento's own template renders inside the row rather than on the word 'Discount', so it survives translation. The row only exists while a discount is actually applied, which is what makes toHaveCount(0) meaningful after the coupon is removed.",
+    "discountTotalSelector": "#cart-totals tr.totals:has(span.discount.coupon) td.amount .price"
+  },
+  "checkout": {
+    "fieldErrorSelectorComment": "Where Magento's Knockout checkout renders a per-field rejection message. Deliberately NOT `validation.fieldErrorSelector`: that one covers the jQuery-validate forms (login, register, address book), while checkout is a UI-component form whose Magento_Ui field template emits `div.field-error` instead. Both stock themes run the same Knockout checkout - Hyva ships hyva-themes/magento2-luma-checkout - so one value covers them.",
+    "fieldErrorSelector": ".field-error",
+    "nextStepButtonLabel": "Next",
+    "placeOrderButtonLabel": "Place Order",
+    "billing": {
+      "emailFieldLabel": "Email Address",
+      "firstNameFieldLabel": "First Name",
+      "lastNameFieldLabel": "Last Name",
+      "companyFieldLabel": "Company",
+      "streetAddressFieldSelectorComment": "Addressed by name, not by label: Luma gives the street lines a compound accessible name (\"Street Address* Street Address: Line 1\"), so a label match either misses or hits every line at once.",
+      "streetAddressFieldSelector": "[name=\"street[0]\"]",
+      "countryFieldLabel": "Country",
+      "cityFieldLabel": "City",
+      "postcodeFieldLabel": "Zip/Postal Code",
+      "telephoneFieldLabel": "Phone Number"
+    },
+    "virtualComment": "The virtual-only branch of checkout. A cart with nothing to ship makes Magento drop the shipping step outright - no address step of its own, no rate list, no shipping row in the summary - and render the billing address inside the payment block instead. These address that branch; `progressStepSelector` and `shippingRatesSelector` exist so its absence can be asserted rather than assumed. Both stock themes run the same Knockout checkout, so one set covers them.",
+    "virtual": {
+      "progressStepSelector": ".opc-progress-bar-item",
+      "shippingStepSelector": "#checkout-step-shipping",
+      "shippingRatesSelector": "table.table-checkout-shipping-method",
+      "emailFieldsetSelector": "#customer-email-fieldset",
+      "billingAddressFormSelector": ".billing-address-form",
+      "billingAddressUpdateButtonSelectorComment": "Resolved from the page, not from inside billingAddressFormSelector: Magento renders this control as a SIBLING of the address form, so scoping it to the form finds nothing. There is exactly one on a virtual checkout.",
+      "billingAddressUpdateButtonSelector": "button.action-update"
+    },
+    "shipping": {
+      "methodFieldLabel": "Fixed",
+      "addressItem": ".shipping-address-item",
+      "selectedAddressItem": ".shipping-address-item.selected-item",
+      "shipHereButtonLabel": "Ship Here"
+    },
+    "payment": {
+      "methodFieldLabel": "Check Money Order",
+      "methodInputSelectorComment": "Every payment method input Magento's checkout renders. Used to read back WHICH method the quote ended up with: the suite finds the one that is `:checked` and takes the title from its own <label>, so the order's payment method is compared against what the customer actually selected rather than against a string hard-coded in the test.",
+      "methodInputSelector": "input[name=\"payment[method]\"]",
+      "methodTitleSelectorComment": "The rendered title of one payment method, addressed from its radio's id - `%s` is substituted with that id. Magento's own template gives every method radio an id and a for-associated <label>; a template that drops the id leaves the control with no accessible name at all, and the suite fails on that rather than guessing at the surrounding markup.",
+      "methodTitleSelector": "label[for=\"%s\"]"
+    },
+    "summaryComment": "The checkout's Order Summary panel. Hyva has no checkout of its own and runs the Luma Fallback, so both stock themes render Magento's own Knockout summary templates and one set of handles serves both. Each row is addressed by the class Magento's template emits, never by the visible label, so the selectors survive translation. `subtotalSelector` mirrors the cart's: a store displaying both inc- and exc-VAT renders two subtotal rows, so the inc row is pinned first with the single unqualified row as the fallback.",
+    "summary": {
+      "block": ".opc-block-summary",
+      "itemsToggle": ".opc-block-summary .items-in-cart > .title",
+      "itemSelector": ".opc-block-summary .minicart-items .product-item",
+      "itemNameSelector": ".product-item-name",
+      "itemPriceSelector": ".subtotal .price",
+      "subtotalSelector": ".opc-block-summary tr.totals.sub.incl td.amount .price, .opc-block-summary tr.totals.sub:not(.excl):not(.incl) td.amount .price",
+      "discountBasisSubtotalSelectorComment": "The subtotal the coupon DISCOUNT is calculated from at checkout. Normally the same node as subtotalSelector, and it defaults to it; it exists for the same reason as the cart's key of this name, because a store showing both inc- and exc-VAT prices can display its subtotal on one basis while Magento computes the discount on the other.",
+      "discountBasisSubtotalSelector": ".opc-block-summary tr.totals.sub.incl td.amount .price, .opc-block-summary tr.totals.sub:not(.excl):not(.incl) td.amount .price",
+      "shippingSelector": ".opc-block-summary tr.totals.shipping td.amount .price",
+      "taxSelector": ".opc-block-summary tr.totals-tax td.amount .price",
+      "grandTotalSelector": ".opc-block-summary tr.grand.totals td.amount .price",
+      "discountTotalSelectorComment": "The discount row, keyed on the coupon-label span Magento's own SalesRule template renders inside it rather than on the word 'Discount', so it survives translation. The row exists only while a discount is actually applied, which is what makes toHaveCount(0) meaningful before the coupon goes on.",
+      "discountTotalSelector": ".opc-block-summary tr.totals:has(span.discount.coupon) td.amount .price"
+    },
+    "couponComment": "The 'Apply Discount Code' disclosure in the checkout's payment step. It is a different form from the cart's (`#discount-form` vs `#discount-coupon-form`) driven by a different Knockout component, which is exactly why applying a coupon at checkout is worth testing separately from applying one in the cart.",
+    "coupon": {
+      "formToggle": "#block-discount-heading",
+      "formSelector": "#discount-form",
+      "fieldSelector": "#discount-code",
+      "applyButtonLabel": "Apply Discount",
+      "cancelButtonLabel": "Cancel coupon"
+    },
+    "success": {
+      "block": ".checkout-success"
+    }
+  },
+  "admin": {
+    "login": {
+      "usernameFieldLabel": "Username",
+      "passwordFieldLabel": "Password",
+      "submitButtonLabel": "Sign in"
+    },
+    "cmsblocks": {
+      "form": {
+        "enabledFieldLabel": "Enable Block",
+        "titleFieldLabel": "Block Title",
+        "identifierFieldLabel": "Identifier",
+        "submitButtonLabel": "Save",
+        "deleteButtonLabel": "Delete Block",
+        "confirmButtonLabel": "OK"
+      }
+    },
+    "cmspages": {
+      "form": {
+        "enabledFieldLabel": "Enable Page",
+        "titleFieldLabel": "Page Title",
+        "identifierFieldLabel": "Identifier",
+        "submitButtonLabel": "Save",
+        "deleteButtonLabel": "Delete Page",
+        "confirmButtonLabel": "OK"
+      }
+    },
+    "cartPriceRules": {
+      "form": {
+        "nameFieldLabel": "Rule Name",
+        "descriptionFieldLabel": "Description",
+        "enabledFieldLabel": "Active",
+        "usesPerCustomerFieldLabel": "Uses per Customer",
+        "fromFieldLabel": "From",
+        "toFieldLabel": "To",
+        "priorityFieldLabel": "Priority",
+        "websitesFieldLabel": "Websites",
+        "customerGroupsFieldLabel": "Customer Groups",
+        "couponTypeField": "select[name='coupon_type']",
+        "couponCodeFieldLabel": "Coupon Code",
+        "discountAmountFieldLabel": "Discount Amount",
+        "submitButtonLabel": "Save and Continue Edit",
+        "deleteButtonLabel": "Delete",
+        "confirmButtonLabel": "OK"
+      }
+    },
+    "grid": {
+      "searchFieldPlaceholder": "Search by keyword",
+      "rowSelector": ".data-grid tbody tr",
+      "emptyRowSelector": ".data-grid tbody tr.data-grid-tr-no-data",
+      "columnHeaderSelectorComment": "Header cells of a UI-component grid, resolved relative to the row's own table by `gridCellByColumnLabel`. Magento's Knockout grid template emits bare `<td>` elements - no column id, no per-column class - so a cell can only be reached by its position, and the enabled column set varies per store (the two demo stores differ by three columns on the order grid alone). Matching the header label is what makes that position trustworthy.",
+      "columnHeaderSelector": "thead tr th"
+    },
+    "products": {
+      "grid": {
+        "editLinkLabel": "Edit"
+      },
+      "form": {
+        "nameFieldLabel": "Product Name",
+        "saveButtonLabel": "Save"
+      }
+    },
+    "customers": {
+      "grid": {
+        "editLinkLabel": "Edit"
+      },
+      "accountInformationTabLabel": "Account Information",
+      "form": {
+        "emailField": "[name=\"customer[email]\"]"
+      }
+    },
+    "cache": {
+      "flushButtonLabel": "Flush Magento Cache"
+    },
+    "reviewsComment": "Marketing > Reviews. Unlike the product/customer/order grids this one is NOT a UI component - it is a legacy adminhtml grid with a per-column filter row and its own Search button, so none of the `admin.grid.*` helpers apply to it. Filtering by the review's own Summary is what turns 'the review was accepted' into 'the review exists on the server', and the row then has to carry the moderation status, the nickname and the product name.",
+    "reviews": {
+      "grid": {
+        "summaryFilterSelector": "#reviewGrid_filter_title",
+        "searchButtonSelector": "[data-action=\"grid-filter-apply\"]",
+        "rowSelector": "#reviewGrid_table tbody tr"
+      }
+    },
+    "orders": {
+      "grid": {
+        "viewLinkLabel": "View",
+        "columnLabelsComment": "Header labels of the order grid columns the suite reads a value out of, matched by `gridCellByColumnLabel`. `customerColumnLabel` is the Bill-to Name column (the order grid renders Ship-to separately); `grandTotalColumnLabel` is the purchased-currency total, which is the one the customer was charged. A store that has renamed or disabled either column fails with the available column list in the message.",
+        "customerColumnLabel": "Bill-to Name",
+        "grandTotalColumnLabel": "Grand Total (Purchased)"
+      },
+      "createComment": "Sales > Orders > Create New Order. This screen is Magento's oldest surviving admin form: a prototype.js-driven page that rebuilds whole sections over AJAX after almost every interaction, which is exactly why it is worth covering on an upgrade. Nearly every handle here is an id emitted by core templates, because the markup carries no stable classes or roles.",
+      "create": {
+        "loadingMaskSelector": "#loading-mask",
+        "newCustomerButtonLabel": "Create New Customer",
+        "accountSectionSelectorComment": "The Account Information section, used as the signal that a customer has been chosen and the order form is open. Deliberately NOT the `#order-data` wrapper that visually encloses it: Magento leaves that wrapper display:none on some builds (the Hyva demo's) while rendering its sections perfectly well, so gating on it passes on one store and hangs forever on the next. This section is hidden before a customer is chosen and visible after it on every build checked, and the flow genuinely needs it - the order's email field lives inside it.",
+        "accountSectionSelector": "#order-form_account",
+        "addProductsButtonSelector": "#add_products",
+        "productSkuFilterSelector": "#sales_order_create_search_grid_filter_sku",
+        "productRowSelector": "#sales_order_create_search_grid_table tbody tr",
+        "productCheckboxSelector": "input[type=\"checkbox\"]",
+        "productQuantitySelector": "input[name=\"qty\"]",
+        "addSelectedButtonLabel": "Add Selected Product(s) to Order",
+        "itemsSelector": "#order-items",
+        "emailFieldSelector": "#email",
+        "billing": {
+          "firstNameSelector": "#order-billing_address_firstname",
+          "lastNameSelector": "#order-billing_address_lastname",
+          "streetSelector": "#order-billing_address_street0",
+          "citySelector": "#order-billing_address_city",
+          "postcodeSelector": "#order-billing_address_postcode",
+          "telephoneSelector": "#order-billing_address_telephone",
+          "countrySelector": "#order-billing_address_country_id"
+        },
+        "shippingRatesLinkSelector": "#order-shipping-method-summary a",
+        "shippingMethodRadioSelector": "input[name=\"order[shipping_method]\"]",
+        "paymentMethodRadioSelector": "input[name=\"payment[method]\"]",
+        "grandTotalSelector": "#order-totals #grand-total .price",
+        "submitButtonLabel": "Submit Order"
+      },
+      "view": {
+        "invoiceButtonLabel": "Invoice",
+        "shipButtonLabel": "Ship",
+        "orderNumberHeadingSelector": "h1.page-title",
+        "statusSelector": "#order_status",
+        "customerNameSelectorComment": "The Account Information table's Customer Name / Email rows. The row is addressed through its own `<th>` label because the table carries no per-row identifier; a store running a translated admin overrides the whole selector string rather than the label alone.",
+        "customerNameSelector": ".order-account-information-table tr:has(th:text-is(\"Customer Name\")) td",
+        "emailSelector": ".order-account-information-table tr:has(th:text-is(\"Email\")) td",
+        "grandTotalSelectorComment": "The order view's Grand Total figure. `:has-text` rather than `:text-is` is load-bearing: the label cell wraps its text in a `<strong>`, so the `<td>` has no direct text node for an exact-text match to bind to.",
+        "grandTotalSelector": ".order-totals tr:has(td.label:has-text(\"Grand Total\")) .price",
+        "holdButtonLabel": "Hold",
+        "unholdButtonLabel": "Unhold",
+        "commentFieldSelector": "#history_comment",
+        "commentSubmitButtonSelector": "#order_history_block .order-history-comments-actions button",
+        "commentListSelectorComment": "Scoping to `#order_history_block` is load-bearing: the order view renders a SECOND `ul.note-list` for its Comments History tab, which is present but unpopulated. An unscoped locator is a strict-mode violation, and picking the wrong one silently asserts against an empty list.",
+        "commentListSelector": "#order_history_block ul.note-list",
+        "commentItemSelector": ".note-list-comment"
+      },
+      "invoice": {
+        "emailCopyCheckboxLabel": "Email Copy of Invoice",
+        "submitButtonLabel": "Submit Invoice"
+      },
+      "shipment": {
+        "emailCopyCheckboxLabel": "Email Copy of Shipment",
+        "submitButtonLabel": "Submit Shipment"
+      }
+    }
+  },
+  "minicart": {
+    "itemPriceSelectorComment": "The price on one minicart line, resolved inside that line's own row. Luma wraps it in `.product-item-pricing`; Hyva's cart drawer renders a bare `.price-box`, so the Hyva layer overrides it. Read with readMoney, which takes the first VISIBLE match - dual inc/exc-VAT stores render both variants here.",
+    "itemPriceSelector": ".product-item-pricing .price",
+    "viewCartLinkLabel": "View and Edit Cart",
+    "checkoutButtonLabel": "Proceed to Checkout",
+    "itemCounterSelector": ".action.showcart .counter-number"
+  },
+  "search": {
+    "searchButtonLabel": "Search",
+    "noResultsMessageSelectorComment": "Where the results page reports that nothing matched. Both stock themes render Magento's own `.message.notice` inside the main column, so one selector covers them. Scoped to `.column.main` so a stray header/footer notice cannot satisfy the assertion.",
+    "noResultsMessageSelector": ".column.main .message.notice",
+    "resultItemSelectorComment": "Scoped to .products.wrapper, not .products-grid: Magento renders the listing as \"products wrapper grid products-grid\" OR \"products wrapper list products-list\" depending on catalog/frontend/list_mode, and a store defaulting to list view matched nothing at all. Same shape as categoryPage.listingPage.productItemSelector, which already handled both.", "resultItemSelector": ".products.wrapper .product-item",
+    "resultItemNameSelector": ".product-item-link"
+  },
+  "newsletterManagePageComment": "The account's own subscription form (`slugs.account.newsletter`). Distinct from the `newsletter` block below, which is the footer sign-up form. Both stock themes keep Magento's own ids here.",
+  "newsletterManagePage": {
+    "formSelector": "#form-validate",
+    "subscriptionCheckboxSelector": "#subscription",
+    "saveButtonLabel": "Save"
+  },
+  "newsletter": {
+    "emailFieldLabel": "Sign Up for Our Newsletter",
+    "subscribeButtonLabel": "Subscribe"
+  }
+}

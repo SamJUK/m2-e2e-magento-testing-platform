@@ -1,0 +1,24 @@
+{
+  "metaRobotsTag": {
+    "robotsMetaSelector": "meta[name='robots']",
+    "admin": {
+      "flagLabels": {
+        "no_index": "No index",
+        "no_follow": "No follow",
+        "no_archive": "No archive"
+      },
+      "yesOptionLabel": "Yes",
+      "noOptionLabel": "No",
+      "seoSectionTitle": "Search Engine Optimization",
+      "cmsPage": {
+        "urlKeyFieldSelector": "input[name='identifier']",
+        "newPageUrl": "cms/page/new"
+      },
+      "productGridUrl": "catalog/product/",
+      "categoryTreeUrl": "catalog/category/",
+      "categoryEditUrl": "catalog/category/edit/id/",
+      "categorySaveButtonLabel": "Save",
+      "categoryExpandAllButtonLabel": "Expand All"
+    }
+  }
+}

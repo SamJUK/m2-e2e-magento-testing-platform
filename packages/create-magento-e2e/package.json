@@ -1,0 +1,25 @@
+{
+  "name": "@samjuk/create-magento-e2e",
+  "version": "0.1.0",
+  "description": "Scaffold the Magento 2 E2E suite into a store's dev/tests/e2e",
+  "bin": {
+    "create-magento-e2e": "bin/create.js"
+  },
+  "files": [
+    "bin",
+    "template",
+    "module-template"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamJUK/m2-e2e-magento-testing-platform.git",
+    "directory": "packages/create-magento-e2e"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "OSL-3.0"
+}

@@ -1,0 +1,22 @@
+{
+  "blog": {
+    "containerSelector": ".mageos-blog-container",
+    "cardSelector": ".mageos-blog-card",
+    "postTitleSelector": ".mageos-blog-post__title",
+    "postContentSelector": ".mageos-blog-post__content",
+    "admin": {
+      "titleFieldLabel": "Title",
+      "urlKeyFieldSelector": "input[name='url_key']",
+      "statusFieldSelector": "select[name='status']",
+      "publishedStatusLabel": "Published",
+      "draftStatusLabel": "Draft",
+      "saveButtonLabel": "Save",
+      "confirmButtonLabel": "OK",
+      "successMessageSelector": ".message-success",
+      "pageBuilderNoteComment": "The post's content and short_content fields are Page Builder stages on any store that has Magento_PageBuilder enabled, which is not drivable from an E2E suite. Posts are therefore created with a title and URL key only \u2014 Title is the form's one required field \u2014 and the content itself is out of scope.",
+      "gridActionsToggleLabel": "Select",
+      "gridDeleteActionLabel": "Delete",
+      "gridRowActionsCellSelector": ".data-grid-actions-cell"
+    }
+  }
+}

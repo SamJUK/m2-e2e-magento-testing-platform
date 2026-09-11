@@ -1,0 +1,111 @@
+{
+  "loginPage": {
+    "formSelector": "#customer-login-form",
+    "emailFieldLabel": "Email",
+    "passwordFieldLabel": "Password",
+    "signInButtonLabel": "Sign In"
+  },
+  "registerPage": {
+    "formSelector": "form.form-create-account"
+  },
+  "forgotPasswordPage": {
+    "formSelector": "#user_forgotpassword",
+    "emailFieldLabel": "Email",
+    "submitButtonLabel": "Reset My Password"
+  },
+  "addressBookPage": {
+    "formSelector": "#form-validate",
+    "addressListSelector": ".block-addresses-list",
+    "deleteLinkSelector": "a.action.delete",
+    "deleteLinkXPathClass": "contains(concat(' ', normalize-space(@class), ' '), ' delete ')",
+    "form": {
+      "streetAddressField": "#street_1"
+    }
+  },
+  "accountOverviewPage": {
+    "menuTriggerSelector": "#customer-menu",
+    "customerMenuSelector": "nav[aria-labelledby=\"customer-menu\"]",
+    "accountInformationBlock": "h3:has-text(\"Contact Information\") + p",
+    "logoutButtonLabel": "Sign Out"
+  },
+  "cart": {
+    "cartItemSelector": "article.cart.item",
+    "quantityFieldSelector": "input[data-role=\"cart-item-qty\"]",
+    "updateButtonSelector": "button[data-cart-item-update]",
+    "removeItemAriaLabel": "Remove %s",
+    "unitPriceSelector": ".price-box > span:nth-last-child(2) .price",
+    "lineTotalSelector": ".price-box > span:last-child .price",
+    "subtotalSelector": "#cart-totals div:has(> div:text-is(\"Subtotal\")) > div.justify-self-end",
+    "discountBasisSubtotalSelectorComment": "Hyva renders one subtotal row, so the discount is measured against the same node as subtotalSelector. Core's default is Luma-shaped (tr.totals.sub...), which matches nothing here \u2014 this override is required, not cosmetic.",
+    "discountBasisSubtotalSelector": "#cart-totals div:has(> div:text-is(\"Subtotal\")) > div.justify-self-end",
+    "grandTotalSelector": "#cart-totals div:has(> div:text-is(\"Grand Total\")) > div.justify-self-end",
+    "couponFormToggle": "details.coupon-form summary",
+    "discountTotalSelector": "#cart-totals div:has(> div:text-matches(\"^Discount\")) > div.justify-self-end"
+  },
+  "validation": {
+    "fieldErrorSelector": "ul.messages li[data-msg-field]"
+  },
+  "contactPage": {
+    "formSelector": "#contact"
+  },
+  "productPageComment": "priceSelector: Hyva renders the MAIN product's price through its own Alpine `initPrice` component, which emits `.price-box > div > .price-container > .final-price > .price-wrapper > .price` and drops the `data-price-type=\"finalPrice\"` attribute core's selector keys on (the listing tiles further down the page keep it, which is why the scope to `.product-info-main` is not enough on its own).",
+  "productPage": {
+    "priceSelector": ".product-info-main .price-box.price-final_price .final-price .price",
+    "formSelector": "#product_addtocart_form",
+    "quantityFieldLabel": "Quantity",
+    "quantityFieldSelector": "input[name=\"qty\"]",
+    "addToCartButtonLabel": "Add to Cart"
+  },
+  "comparePageComment": "Hyva's comparison table carries neither an id nor a class of its own; it is the only table in the main column, which is what makes this unambiguous. Every other comparePage handle is core's and resolves identically inside it.",
+  "comparePage": {
+    "tableSelector": ".column.main table"
+  },
+  "reviewFormComment": "Hyva stacks the star inputs behind their labels without giving them ids, so the star is addressed by its accessible name instead of by Luma's `#Rating_<n>`. `%s` is the star count - note '1 star' is singular, which is why the tests use 5.",
+  "reviewForm": {
+    "ratingSelector": "input[aria-label=\"%s stars\"]"
+  },
+  "categoryPage": {
+    "listingPage": {
+      "sorter": "Sort By",
+      "sorterSelector": "select[data-role=\"sorter\"]",
+      "sortOrderDirectionSelector": "button.sorter-action",
+      "firstProductName": "a.product-item-link",
+      "productPrice": ".product-item [data-price-type=\"finalPrice\"] .price",
+      "layeredNavigation": "#filters-content",
+      "filterGroupSelector": "details.filter-option",
+      "filterGroupTitleSelector": "summary.filter-options-title",
+    "appliedFiltersDisclosureTitleSelector": "details.filter-current > summary"
+    }
+  },
+  "currencySwitcher": {
+    "triggerSelector": "[x-data=\"initCurrencySwitcher\"] button[aria-haspopup=\"true\"]"
+  },
+  "search": {
+    "searchButtonLabel": "Search",
+    "searchToggleSelector": "#menu-search-icon",
+    "searchPanelSelector": "#search-content",
+    "searchInputSelector": "#search"
+  },
+  "newsletter": {
+    "formSelector": "form.subscribe",
+    "emailFieldLabel": "Email Address"
+  },
+  "minicartComment": "itemPriceSelector: the cart drawer renders each line's price as a bare `.price-box` injected with `x-html`, with none of Luma's `.product-item-pricing` wrapper. Resolved inside the line's own row by the page object, so the drawer's own Subtotal (which sits outside every row) cannot satisfy it.",
+  "minicart": {
+    "itemPriceSelector": ".price-box .price",
+    "drawerSelector": "dialog#cart-drawer",
+    "triggerSelector": "#menu-cart-icon",
+    "removeItemAriaLabel": "Remove product \"%s\" from cart",
+    "viewCartLinkLabel": "View and Edit Cart",
+    "checkoutButtonLabel": "Checkout",
+    "itemCounterSelector": "#menu-cart-icon [x-text=\"summaryCount\"]"
+  },
+  "orderHistoryPage": {
+    "viewOrderLinkSelector": "a[title=\"View Order\"]",
+    "reorderControlSelector": "button[title=\"Reorder\"]"
+  },
+  "orderViewPageComment": "Hyva's order view drops Magento's `.box-order-billing-method` class and labels each box with a plain `<p>`, so the payment-method box can only be told apart from the shipping-method box beside it by that label. The `> p` is a DIRECT child, which is what keeps the match to the one wrapper. A translated storefront overrides this whole string.",
+  "orderViewPage": {
+    "paymentMethodSelector": ".column.main div:has(> p:text-is(\"Payment Method\")) > .box-content"
+  }
+}

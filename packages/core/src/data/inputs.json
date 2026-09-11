@@ -1,0 +1,54 @@
+{
+  "contact": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "telephone": "07000000000",
+    "message": "Hello! This is a test. Feel free to ignore this message.",
+    "malformedEmailComment": "Must be rejected by an `input[type=email]` as well as by Magento's own validator, so it may not contain an @.",
+    "malformedEmail": "not-an-email"
+  },
+  "account": {
+    "invalidLoginComment": "Credentials for the rejected-login tests. The email must belong to no account on the store.",
+    "invalidLogin": {
+      "email": "e2e-no-such-customer@example.com",
+      "password": "NotThePassword1!"
+    }
+  },
+  "product": {
+    "custom_quantity": 2,
+    "configurableProductOptions": [["Size", "M"], ["Color", "Purple"]]
+  },
+  "category": {
+    "listingPage": {
+      "sortOrder": "Price",
+      "sortOrderDirectionComment": "Direction the `sortOrder` option above produces: 'asc' or 'desc'. Themes that merge direction into the sort options (price__desc) need this set to match.",
+      "sortOrderDirection": "asc",
+      "descendingUrlPattern": "product_list_dir=desc",
+      "sortOrderByNameComment": "The sorter option that orders the listing alphabetically by product name. Selected by its visible text, like `sortOrder` above.",
+      "sortOrderByName": "Product Name",
+      "resultsPerPageComment": "A results-per-page option the limiter offers, as its option VALUE. `slugs.categories.pagedListingPage` must list MORE visible products than this, or the tile count can never equal it and the assertion becomes untestable rather than merely false. Must also differ from the store's default page size, or the test proves nothing.",
+      "resultsPerPage": "24"
+    }
+  },
+  "reviewComment": "The review the @review test posts. `summaryPrefix` is only the prefix - the spec appends a per-run token, because the admin grid is filtered on the summary and a shared string would match every previous run's review as well.",
+  "review": {
+    "nickname": "E2E Reviewer",
+    "summaryPrefix": "E2E Review",
+    "text": "Automated end-to-end test review. Safe to delete.",
+    "ratingStarsComment": "Which star to click, 1-5. Substituted into selectors.reviewForm.ratingSelector.",
+    "ratingStars": 5
+  },
+  "search": {
+    "query": "bag",
+    "noResultsQueryComment": "A term the catalogue cannot match. It has to be nonsense rather than merely unstocked: Magento's search falls back to partial matches, so a real word ('umbrella') can still return tiles on a store that happens to sell one.",
+    "noResultsQuery": "zzqxvnothingmatchesthis"
+  },
+  "admin": {
+    "orders": {
+      "createComment": "Address country for an order built in the admin. It must be a country the store ships to, and one whose region is free text rather than a required dropdown - the admin address form swaps the region field between an input and a select when the country changes, and a country with required regions would need the option chosen as well.",
+      "create": {
+        "country": "United Kingdom"
+      }
+    }
+  }
+}

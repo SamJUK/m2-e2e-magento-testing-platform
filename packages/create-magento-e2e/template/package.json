@@ -1,0 +1,25 @@
+{
+  "name": "@example/e2e",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:admin": "playwright test --grep @admin",
+    "test:negative": "playwright test --grep @negative",
+    "test:report": "playwright show-report test-report"
+  },
+  "imports": {
+    "#test": "./fixtures.ts"
+  },
+  "dependencies": {
+    "@samjuk/e2e-m2-playwright-core": "^0.1.0",
+    "@samjuk/e2e-m2-theme-luma": "^0.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.0.0",
+    "dotenv": "^17.3.1",
+    "typescript": "^5.4.5"
+  }
+}

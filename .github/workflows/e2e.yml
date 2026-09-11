@@ -1,0 +1,168 @@
+# Runs the shared suite against a real Magento install, using the same
+# tests/docker/run.sh a developer uses locally — so a CI-only failure is not
+# possible.
+#
+# MANUAL ONLY, deliberately. Each target boots its own full Magento stack and
+# takes 20 to 30 minutes, and this project sees infrequent bursts of activity
+# rather than steady traffic — a nightly schedule bills three stacks on every
+# night that nothing changed. The push trigger below is sketched rather than
+# deleted; see the note on it.
+#
+# Also callable from another workflow (`workflow_call`), which is how the
+# `/e2e` PR command runs a narrowed slice of it.
+#
+# The hyva target needs HYVA_COMPOSER_USER / HYVA_COMPOSER_PASS secrets and a
+# licence that permits CI use. Nothing here is triggered by `pull_request`, so
+# those secrets are never exposed to a fork.
+name: E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 'Targets, space separated: luma hyva mageos — or "all"'
+        default: all
+        type: string
+      grep:
+        description: 'Optional Playwright tag filter, e.g. @checkout or "@cart|@customer"'
+        default: ''
+        type: string
+
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Commit to check out. Defaults to the triggering ref.'
+        default: ''
+        type: string
+      targets:
+        default: all
+        type: string
+      grep:
+        default: ''
+        type: string
+
+  # Deliberately commented, not missing. The intent is for a release to be
+  # gated on this suite rather than for every push to master to pay for it, so
+  # this belongs in the release flow (release.yml calling this workflow) rather
+  # than as a trigger of its own. Uncomment only if that changes.
+  #
+  # push:
+  #   branches: [master]
+
+# A second dispatch landing on top of a running one would boot six Magento
+# stacks for one set of results.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Resolve targets
+    runs-on: ubuntu-latest
+    # Checks out and runs `ls`. The sweep gave this the same 90 as the suite
+    # job, which would let a hung checkout bill an hour and a half.
+    timeout-minutes: 5
+    outputs:
+      targets: ${{ steps.parse.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      # The valid targets are whichever .env.<target> files exist, so adding a
+      # target is a one-file change in tests/docker and needs no edit here.
+      - name: Parse the requested targets
+        id: parse
+        env:
+          REQUESTED: ${{ inputs.targets }}
+        run: |
+          set -euo pipefail
+          known=$(ls tests/docker/.env.* | sed 's#.*/\.env\.##' | sort)
+          echo "Known targets: $(echo $known)"
+
+          requested=$(echo "${REQUESTED:-all}" | xargs)
+          if [ -z "$requested" ] || [ "$requested" = "all" ]; then
+            selected=$known
+          else
+            selected=""
+            for token in $requested; do
+              if echo "$known" | grep -qx "$token"; then
+                selected="$selected $token"
+              else
+                echo "::error::unknown target '$token'. Valid targets: $(echo $known)"
+                exit 1
+              fi
+            done
+          fi
+
+          json=$(printf '%s\n' $selected | jq -R . | jq -sc .)
+          echo "Selected: $json"
+          echo "targets=$json" >> "$GITHUB_OUTPUT"
+
+  suite:
+    name: ${{ matrix.target }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    # Booting Magento plus 95 tests on one worker. Measured: 20 to 31 minutes
+    # per target, so this is headroom, not an estimate.
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.prepare.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+
+      # Installed through tests/project, NOT with a bare `npx playwright` at
+      # the repo root. The root declares no @playwright/test, so `npx` there
+      # fetches whatever is currently `latest` on npm and installs THAT
+      # revision's browser, while the suite runs tests/project's own pinned
+      # copy and looks for a different one. The failure is every test at once
+      # with "Executable doesn't exist", which reads like a broken install
+      # rather than two Playwright versions.
+      - name: Install the browser tests/project will use
+        run: pnpm --filter @samjuk/e2e-m2-docker-stack exec playwright install --with-deps chromium
+
+      - name: Boot the stack and install Magento
+        env:
+          HYVA_COMPOSER_USER: ${{ secrets.HYVA_COMPOSER_USER }}
+          HYVA_COMPOSER_PASS: ${{ secrets.HYVA_COMPOSER_PASS }}
+          HYVA_COMPOSER_REPO: ${{ secrets.HYVA_COMPOSER_REPO }}
+        run: tests/docker/run.sh up ${{ matrix.target }}
+
+      # No --workers override. createPlaywrightConfig already picks 1 worker
+      # under CI on purpose, and passing 2 here overrode that considered
+      # default with contention: 4 to 6 of 95 tests needed a retry, all of them
+      # waits expiring while a single Magento stack served two browsers at once
+      # on a shared runner.
+      - name: Run the suite
+        env:
+          GREP: ${{ inputs.grep }}
+        run: |
+          if [ -n "$GREP" ]; then
+            tests/docker/run.sh test ${{ matrix.target }} --grep "$GREP"
+          else
+            tests/docker/run.sh test ${{ matrix.target }}
+          fi
+
+      - if: always()
+        run: tests/docker/run.sh down ${{ matrix.target }}
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.target }}
+          path: |
+            tests/project/test-results/
+            tests/project/test-report/
+          retention-days: 7

@@ -1,0 +1,17 @@
+{
+  "name": "@samjuk/e2e-m2-docker-stack",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": { "test": "playwright test" },
+  "imports": { "#test": "./fixtures.ts" },
+  "dependencies": {
+    "@samjuk/e2e-m2-playwright-core": "workspace:*",
+    "@samjuk/e2e-m2-theme-hyva": "workspace:*",
+    "@samjuk/e2e-m2-theme-luma": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.5"
+  }
+}

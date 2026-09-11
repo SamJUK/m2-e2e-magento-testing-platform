@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [],
+  "linked": [
+    [
+      "@samjuk/e2e-m2-playwright-core",
+      "@samjuk/e2e-m2-theme-*",
+      "@samjuk/e2e-m2-module-*"
+    ]
+  ],
+  "access": "public",
+  "baseBranch": "master",
+  "updateInternalDependencies": "patch"
+}

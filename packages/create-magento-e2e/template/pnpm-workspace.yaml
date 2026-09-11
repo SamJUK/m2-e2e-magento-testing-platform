@@ -1,0 +1,16 @@
+# pnpm 11 refuses packages published within the last week as a supply-chain
+# guard, so every install in the days after a release fails with
+# ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION.
+#
+# Named explicitly rather than as `@samjuk/*`: a scope-wide exemption also
+# covers any future package published under that scope, including one you never
+# meant to trust.
+#
+# The scaffolder itself is deliberately absent. It is run once through `npx`,
+# which is npm — and npm has no release-age guard to exempt it from. An entry
+# for it could never fire, and config that cannot fire is worse than none.
+#
+# Set here and not in .npmrc: pnpm reads these settings only from
+# pnpm-workspace.yaml and silently ignores the .npmrc spelling.
+minimumReleaseAgeExclude:
+  - '@samjuk/e2e-m2-*'

@@ -1,0 +1,58 @@
+{
+  "name": "@samjuk/e2e-m2-theme-hyva",
+  "version": "0.1.0",
+  "description": "Hyv\u00e4 theme page objects and fixtures for Magento 2 E2E testing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./fixtures": {
+      "require": "./dist/fixtures.js",
+      "types": "./dist/fixtures.d.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "fixtures": [
+        "dist/fixtures.d.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm clean && pnpm build"
+  },
+  "e2eTheme": {
+    "testDir": "dist/tests"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@samjuk/e2e-m2-playwright-core": "^0.1.0"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^10.5.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.5",
+    "@samjuk/e2e-m2-playwright-core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamJUK/m2-e2e-magento-testing-platform.git",
+    "directory": "packages/theme-hyva"
+  },
+  "license": "OSL-3.0"
+}

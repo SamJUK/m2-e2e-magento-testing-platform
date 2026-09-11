@@ -1,0 +1,223 @@
+# `/e2e` on a pull request: runs a NARROWED slice of the E2E suite against the
+# PR head.
+#
+# Narrowed is the point. The full suite is three Magento stacks at 20 to 30
+# minutes each, which is far too expensive to attach to `pull_request` and run
+# on every push. This makes it a deliberate act with a deliberate scope:
+#
+#   /e2e                      one target (luma), whole suite
+#   /e2e @checkout            one target, checkout tests only — a few minutes
+#   /e2e hyva @cart @customer hyva, cart and customer tests
+#   /e2e all @smoke           every target, smoke tests only
+#   /e2e all                  everything. Expensive. Say it on purpose.
+#
+# Bare words are targets, @words are Playwright tags joined into one --grep
+# alternation. luma is the default target precisely because it needs no
+# credentials: reaching the hyva target, and so the Hyva licence secrets, takes
+# naming it.
+#
+# OWNER ONLY. `issue_comment` runs the workflow from the BASE branch, so a fork
+# cannot rewrite this file — but the job checks out and executes the PR head
+# with repository secrets in scope. The author_association gate is what keeps
+# that from being a fork's arbitrary code, and it is why this is not opened up
+# to collaborators.
+name: E2E PR Command
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  statuses: write
+
+env:
+  STATUS_CONTEXT: e2e on demand (/e2e)
+
+jobs:
+  parse:
+    name: Parse /e2e command
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: >
+      github.event.issue.pull_request != null &&
+      github.event.comment.author_association == 'OWNER' &&
+      startsWith(github.event.comment.body, '/e2e')
+    outputs:
+      targets: ${{ steps.tokens.outputs.targets }}
+      grep: ${{ steps.tokens.outputs.grep }}
+      head-sha: ${{ steps.pr.outputs.head-sha }}
+    steps:
+      - name: React to comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content=eyes --silent
+
+      - name: Resolve PR head SHA
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" --jq .head.sha)
+          echo "head-sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      # issue_comment runs do not attach to the PR head, so the result is
+      # mirrored onto the head SHA as a commit status to surface it in checks.
+      - name: Set pending status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.head-sha }}" \
+            -f state=pending \
+            -f context="$STATUS_CONTEXT" \
+            -f description="Running the requested E2E slice" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" --silent
+
+      - name: Split the command into targets and tags
+        id: tokens
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+          TOKENS=$(echo "$COMMENT_BODY" | head -n1 | sed -E 's#^/e2e##' | xargs || true)
+
+          targets=""
+          tags=""
+          for token in $TOKENS; do
+            case "$token" in
+              @*) tags="${tags:+$tags|}$token" ;;
+              *)  targets="$targets $token" ;;
+            esac
+          done
+
+          # luma by default: one target, and the one that needs no credentials.
+          targets=$(echo "${targets:-luma}" | xargs)
+
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+          echo "grep=$tags" >> "$GITHUB_OUTPUT"
+          echo "Targets: $targets"
+          echo "Grep: ${tags:-<whole suite>}"
+
+      # Only `ls` is run against the PR head here, nothing from it is executed.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.head-sha }}
+
+      # Rejected HERE rather than inside the reusable workflow. e2e.yml does
+      # validate its own targets, but a failure there reaches the PR as a bare
+      # red cross: the point of a chat command is that a typo answers itself.
+      - name: Reject unknown targets
+        id: validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGETS: ${{ steps.tokens.outputs.targets }}
+        run: |
+          set -euo pipefail
+          known=$(ls tests/docker/.env.* | sed 's#.*/\.env\.##' | sort | tr '\n' ' ')
+          bad=""
+          for token in $TARGETS; do
+            [ "$token" = "all" ] && continue
+            echo " $known" | grep -q " $token " || bad="$bad $token"
+          done
+          [ -z "$bad" ] && exit 0
+
+          {
+            echo "Not a target:\`$bad\`"
+            echo
+            echo "Valid targets: \`$(echo $known | sed 's/ /`, `/g; s/, `$//')\`, or \`all\`."
+            echo
+            echo "\`\`\`"
+            echo "/e2e                       luma, whole suite"
+            echo "/e2e @checkout             luma, checkout tests only"
+            echo "/e2e hyva @cart @customer  hyva, cart and customer tests"
+            echo "/e2e all @smoke            every target, smoke tests only"
+            echo "\`\`\`"
+          } > usage.md
+          gh pr comment "${{ github.event.issue.number }}" --body-file usage.md
+
+          gh api "repos/${{ github.repository }}/statuses/${{ steps.pr.outputs.head-sha }}" \
+            -f state=failure \
+            -f context="$STATUS_CONTEXT" \
+            -f description="Unknown target:$bad" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" --silent
+          exit 1
+
+  suite:
+    name: E2E
+    needs: parse
+    # Resolved from the BASE branch, not from the PR head — that is what makes
+    # the owner gate meaningful. It also means a change to e2e.yml itself
+    # cannot be exercised by `/e2e` on the PR that makes it: that one has to be
+    # dispatched from master after merge.
+    uses: ./.github/workflows/e2e.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.parse.outputs.head-sha }}
+      targets: ${{ needs.parse.outputs.targets }}
+      grep: ${{ needs.parse.outputs.grep }}
+
+  report:
+    name: Report result
+    needs: [parse, suite]
+    if: always() && needs.parse.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Comment the result
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SUITE_RESULT: ${{ needs.suite.result }}
+          TARGETS: ${{ needs.parse.outputs.targets }}
+          GREP: ${{ needs.parse.outputs.grep }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          case "$SUITE_RESULT" in
+            success) status="PASSED. The requested E2E slice is green." ;;
+            failure) status="FAILED. The run has the Playwright report attached as an artifact." ;;
+            *)       status="DID NOT COMPLETE ($SUITE_RESULT)." ;;
+          esac
+
+          # Written to a file rather than passed inline: the body is multi-line
+          # markdown with backticks in it, and building that through nested
+          # quoting is how these steps break in ways only a real PR reveals.
+          {
+            echo "$status"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Targets | \`${TARGETS}\` |"
+            echo "| Tags | \`${GREP:-whole suite}\` |"
+            echo
+            echo "[View run](${RUN_URL})"
+            echo
+            echo "<sub>\`/e2e [targets] [@tags]\` - bare words are targets (luma, hyva, mageos, all), \`@\`words are Playwright tags. Defaults to \`luma\` and the whole suite.</sub>"
+          } > body.md
+
+          gh pr comment "${{ github.event.issue.number }}" --body-file body.md
+
+      - name: Set the final status
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUITE_RESULT: ${{ needs.suite.result }}
+          TARGETS: ${{ needs.parse.outputs.targets }}
+        run: |
+          if [ "$SUITE_RESULT" = "success" ]; then
+            STATE=success
+            DESCRIPTION="E2E passed on ${TARGETS}"
+          else
+            STATE=failure
+            DESCRIPTION="E2E ${SUITE_RESULT} on ${TARGETS}"
+          fi
+
+          gh api "repos/${{ github.repository }}/statuses/${{ needs.parse.outputs.head-sha }}" \
+            -f state="$STATE" \
+            -f context="$STATUS_CONTEXT" \
+            -f description="$DESCRIPTION" \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" --silent

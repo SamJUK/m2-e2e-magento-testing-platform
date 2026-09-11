@@ -1,0 +1,10 @@
+# Blank issues stay on: the README asks for thoughts on the approach, and a
+# form is the wrong shape for that conversation.
+blank_issues_enabled: true
+contact_links:
+  - name: Coverage matrix
+    url: https://github.com/SamJUK/m2-e2e-magento-testing-platform/blob/master/docs/COVERAGE.md
+    about: Check here first. Every test by area, the gaps, and what is deliberately out of scope.
+  - name: Adapting the suite to a store
+    url: https://github.com/SamJUK/m2-e2e-magento-testing-platform/blob/master/docs/adapting-a-store.md
+    about: Failing tests on a new store are usually a configuration override, not a bug.

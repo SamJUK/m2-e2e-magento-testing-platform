@@ -1,0 +1,124 @@
+# Disposable Magento stack for running the E2E suite.
+#
+# Same stack locally and in CI, so a CI-only failure is not possible. Pick the
+# target with MAGENTO_IMAGE (see docker/.env.luma / .env.mageos).
+#
+# The image already ships Magento with `composer install`, `setup:di:compile`
+# and `setup:static-content:deploy` done, so this only has to supply the
+# services it needs and run `setup:install`.
+
+services:
+  db:
+    image: mariadb:10.6
+    command: >
+      --max_allowed_packet=128M
+      --optimizer_use_condition_selectivity=1
+      --optimizer_switch=rowid_filter=off
+    environment:
+      MARIADB_ROOT_PASSWORD: magento
+      MARIADB_DATABASE: magento
+      MARIADB_USER: magento
+      MARIADB_PASSWORD: magento
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    tmpfs:
+      # The database is disposable and rebuilt on demand; keeping it in RAM
+      # takes the install and the per-run dump/restore off disk entirely.
+      - /var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      # Deliberately small: CI runners and dev laptops both have far less
+      # headroom than this defaults to, and the test catalogue is tiny.
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile: { soft: 65536, hard: 65536 }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:latest
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    ports:
+      - "${MAILPIT_HTTP_PORT:-8025}:8025"
+
+  php:
+    image: ${MAGENTO_IMAGE:-ghcr.io/samjuk/magento-ci-testing-env:2.4.8-php8.3}
+    # The published images are amd64-only, so Apple Silicon needs emulation
+    # (OrbStack/Docker Desktop handle this via Rosetta). CI runners are amd64,
+    # where this is a no-op. Drop it if the images ever gain arm64 manifests.
+    platform: ${MAGENTO_PLATFORM:-linux/amd64}
+    # www-data, not root. The image already owns /var/www/html as www-data, and
+    # php-fpm serves as www-data — so anything run as root (setup:install, and
+    # every bin/magento the seed runs) leaves root-owned files under generated/
+    # and var/ that fpm then cannot write, which surfaces as a blanket 500.
+    user: www-data
+    working_dir: /var/www/html
+    environment:
+      MAGENTO_DB_HOST: db
+      MAGENTO_DB_NAME: magento
+      MAGENTO_DB_USER: magento
+      MAGENTO_DB_PASSWORD: magento
+      MAGENTO_REDIS_SESSION_HOST: redis
+      MAGENTO_REDIS_CACHE_HOST: redis
+      MAGENTO_REDIS_PAGE_CACHE_HOST: redis
+      MAGENTO_ADMIN_PATH: admin
+      # The image sets ENV MAGE_MODE=production, and the environment variable
+      # WINS over app/etc/env.php at runtime — so `deploy:mode:set developer`
+      # reports developer on the CLI while php-fpm keeps serving production.
+      # Production needs static content deployed, and `setup:upgrade` (which
+      # sample data requires) clears it, so the storefront 500s on "Unable to
+      # retrieve deployment version of static files". Developer mode generates
+      # static on demand and matches how the suite runs against real dev envs.
+      MAGE_MODE: developer
+      # Passed through so install.sh can pull Hyva (commercial, absent from the
+      # base images). Unset locally means Hyva is skipped, not faked.
+      HYVA_COMPOSER_USER: ${HYVA_COMPOSER_USER:-}
+      HYVA_COMPOSER_PASS: ${HYVA_COMPOSER_PASS:-}
+      HYVA_COMPOSER_REPO: ${HYVA_COMPOSER_REPO:-}
+      THEME: ${THEME:-luma}
+      MAGENTO_CRYPT_KEY: e2e0000000000000000000000000e2e0
+      BASE_URL: http://localhost:${NGINX_PORT:-8080}/
+    volumes:
+      - magento-code:/var/www/html
+      - ./install.sh:/usr/local/bin/e2e-install:ro
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      opensearch: { condition: service_healthy }
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - magento-code:/var/www/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+
+volumes:
+  # Named rather than a bind mount: the image's /var/www/html is populated on
+  # first start, and a bind mount would hide it behind an empty host directory.
+  magento-code:

@@ -1,0 +1,26 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Playwright output
+test-results/
+test-report/
+playwright-report/
+blob-report/
+
+# Local environment + DB dumps
+.env
+var/
+
+# Registry auth is per-machine, never committed.
+.npmrc
+
+# Local working notes. These are NOT committed and must not be: they carry
+# client store names from the work this was extracted from. They were kept out
+# by .git/info/exclude, which is per-clone and does not travel with the repo -
+# listing them here is what makes the protection survive a fresh clone.
+/PLAN.md
+/PROGRESS.md
+/PROMPT.md
+/COVERAGE.md
+/z-setup-npm.txt

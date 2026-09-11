@@ -1,0 +1,73 @@
+# Publishes the @samjuk/* packages to public npm using trusted publishing
+# (OIDC) — no long-lived credential anywhere.
+#
+# Committed DISABLED (`.disabled` suffix). Rename to `release.yml` to enable.
+#
+# Before enabling, two things must already be true:
+#
+#   1. Every package exists on npm. A trusted publisher can only be attached to
+#      a package that has been published at least once, so the very first
+#      release is done interactively from a laptop. One-time bootstrap.
+#   2. Each package has a trusted publisher on npm naming this repository and
+#      THIS workflow filename. Configurations created after 2026-09-03 default
+#      to stage-only — tick "allow direct publish" too, or `changeset publish`
+#      stages the versions and a maintainer promotes each one by hand.
+#
+# No NPM_TOKEN. If you find yourself adding one, the trust relationship is
+# misconfigured and the token is papering over it.
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+concurrency: release-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  # Lets this job mint the short-lived OIDC token npm exchanges for publish
+  # rights. Without it, publishing fails as unauthorised.
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+          scope: '@samjuk'
+
+      # Node 22 ships npm 10, which has no OIDC support. `changeset publish`
+      # shells out to whichever npm is on PATH, so this step is what actually
+      # decides whether trusted publishing works.
+      - name: npm with OIDC support
+        run: |
+          npm install -g npm@^11
+          npm --version
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+
+      # Opens a "Version Packages" PR when changesets are pending, and
+      # publishes once that PR is merged. Core, the themes and the module
+      # packages are linked, so a major drags the whole set with it.
+      #
+      # `changeset publish`, not `pnpm publish`: pnpm's own publish has no OIDC
+      # support yet (pnpm/pnpm#9812), while changesets delegates to `npm
+      # publish` and inherits it.
+      - uses: changesets/action@v1
+        with:
+          version: pnpm changeset version
+          publish: pnpm changeset publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,9 @@
+{
+  "gdpr": {
+    "privacySettings": "/customer/privacy/settings",
+    "erase": "/customer/privacy/erase",
+    "register": "/customer/account/create/",
+    "loginPathFragment": "/customer/account/login",
+    "accountDashboard": "/customer/account/"
+  }
+}

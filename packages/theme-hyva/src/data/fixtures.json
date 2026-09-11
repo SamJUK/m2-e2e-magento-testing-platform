@@ -1,0 +1,10 @@
+{
+  "validation": {
+    "requiredFieldText": "%s field is required."
+  },
+  "account": {
+    "logout": {
+      "notificationText": "You have signed out"
+    }
+  }
+}

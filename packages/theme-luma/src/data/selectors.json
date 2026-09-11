@@ -1,0 +1,17 @@
+{
+  "categoryPage": {
+    "listingPage": {
+      "sorter": "Sort By",
+      "sortOrderDirectionSelector": "[data-role=\"direction-switcher\"]",
+      "firstProductName": ".column.main .product-items .product-item:first-child .product-item-name",
+      "layeredNavigation": "[id=\"layered-filter-block\"]"
+    }
+  },
+  "cart": {
+    "cartItemSelector": ".cart.item"
+  },
+  "header": {
+    "links": {
+    }
+  }
+}

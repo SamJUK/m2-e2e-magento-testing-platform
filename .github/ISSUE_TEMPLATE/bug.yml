@@ -1,0 +1,45 @@
+name: Bug
+description: A test fails, or the suite misbehaves, in a way you think is wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A failing test on a store the suite has not seen before is usually not
+        a bug: it is the store telling you what to override. See
+        [Adapting the suite to a store](../../blob/master/docs/adapting-a-store.md).
+        Report it here if you think the suite itself is wrong.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the test title and the assertion message. Playwright's own error output is more useful than a description of it.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Package version, Node, pnpm, Playwright, Magento or Mage-OS.
+      placeholder: "0.1.0, node 22.16, pnpm 11.1, playwright 1.58, Magento 2.4.8"
+    validations:
+      required: true
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme package
+      options: [theme-luma, theme-hyva, other, not applicable]
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: The command you ran, and anything about the store that matters.

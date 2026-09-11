@@ -1,0 +1,8 @@
+{
+  "gdpr": {
+    "pendingExportTextComment": "Shown once an export has been requested. The archive itself is produced asynchronously, so this message — not a downloadable file — is what proves the request landed.",
+    "pendingExportText": "pending export",
+    "pendingErasureText": "will be erased soon",
+    "privacySettingsHeading": "Privacy Settings"
+  }
+}

@@ -1,0 +1,95 @@
+# Build, typecheck and cross-theme parity. No Magento required.
+#
+# Enabled. The E2E jobs that need a real store live in e2e.yml.disabled.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r build
+
+      - name: Typecheck
+        run: |
+          for pkg in packages/*/; do
+            # create-magento-e2e is plain JS with no tsconfig; tsc --noEmit
+            # there just prints its usage and exits 1.
+            [ -f "$pkg/tsconfig.json" ] || { echo "skipping $pkg (no tsconfig)"; continue; }
+            echo "::group::tsc $pkg"
+            (cd "$pkg" && npx tsc --noEmit)
+            echo "::endgroup::"
+          done
+
+      # The theme packages are a contract, not just two implementations: a
+      # project's config/*.json must behave the same under either. Titles and
+      # tags drifting apart is how that contract breaks, and it has happened
+      # twice — both times silently, because each suite stayed green on its own.
+      - name: Theme test title/tag parity
+        run: |
+          extract() {
+            python3 - "$1" <<'PY'
+          import re, glob, sys
+          out = []
+          for f in sorted(glob.glob(f"{sys.argv[1]}/src/tests/*.spec.ts")):
+              s = open(f).read()
+              # Either quote style, and a title may contain the other one -
+              # "an order's detail page ..." has to be double-quoted, and the
+              # character-class form of this pattern skipped it silently.
+              for m in re.finditer(r"test\(\s*\n?\s*(['\"])(.*?)\1\s*,\s*\{\s*tag:\s*\[([^\]]*)\]", s):
+                  tags = " ".join(re.findall(r"'([^']+)'", m.group(3)))
+                  out.append(f"{m.group(2)} | {tags}")
+          print("\n".join(sorted(out)))
+          PY
+          }
+          extract packages/theme-luma > /tmp/luma.txt
+          extract packages/theme-hyva > /tmp/hyva.txt
+          echo "luma: $(wc -l < /tmp/luma.txt) tests, hyva: $(wc -l < /tmp/hyva.txt) tests"
+
+          # The extractor only matches tests declared with a `{ tag: [...] }`
+          # options object. One added without it would be invisible here, and
+          # the gate would keep reporting success over a test it never compared
+          # — a gate that silently covers less than it claims is worse than no
+          # gate. Assert it saw every test in the package.
+          for theme in luma hyva; do
+            declared=$(grep -rc '^\s*test(' packages/theme-$theme/src/tests/*.spec.ts \
+              | awk -F: '{s+=$2} END {print s}')
+            compared=$(wc -l < /tmp/$theme.txt)
+            [ "$declared" = "$compared" ] || {
+              echo "::error::parity gate compared $compared of $declared tests in theme-$theme — one is missing a { tag: [...] } object"
+              exit 1
+            }
+          done
+          diff -u /tmp/luma.txt /tmp/hyva.txt || {
+            echo "::error::theme-luma and theme-hyva expose different test titles/tags"
+            exit 1
+          }
+
+      - name: Scaffolder template matches the workspace
+        run: node scripts/check-template-versions.mjs
+
+      - name: Every selector key is read
+        run: node scripts/check-unused-selectors.mjs
+
+      - name: Coverage matrix matches the specs
+        run: node scripts/check-coverage-matrix.mjs
+
+      - name: Module packages ship discoverable specs
+        run: node scripts/check-module-packaging.mjs

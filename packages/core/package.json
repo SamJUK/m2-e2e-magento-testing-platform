@@ -1,0 +1,58 @@
+{
+  "name": "@samjuk/e2e-m2-playwright-core",
+  "version": "0.1.0",
+  "description": "Core Playwright framework for Magento 2 E2E testing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./fixtures": {
+      "require": "./dist/fixtures/index.js",
+      "types": "./dist/fixtures/index.d.ts"
+    },
+    "./data": {
+      "require": "./dist/data/index.js",
+      "types": "./dist/data/index.d.ts"
+    },
+    "./config": {
+      "require": "./dist/config/index.js",
+      "types": "./dist/config/index.d.ts"
+    },
+    "./seed": {
+      "require": "./dist/seed/magento.js",
+      "types": "./dist/seed/magento.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm clean && pnpm build"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.50.0"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^10.5.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamJUK/m2-e2e-magento-testing-platform.git",
+    "directory": "packages/core"
+  },
+  "license": "OSL-3.0"
+}

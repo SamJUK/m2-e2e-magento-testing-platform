@@ -1,0 +1,15 @@
+{
+  "_comment": "Hyva theme feature defaults. See core features.json for the contract.",
+  "wishlist": {
+    "removeConfirmationComment": "Hyva's wish list remove control posts straight away (hyva.postForm) - there is no confirmation dialog.",
+    "removeConfirmation": false
+  },
+  "minicart": {
+    "removeConfirmationComment": "Hyva's cart drawer removes a line directly via Alpine's deleteItemFromCart - there is no confirmation dialog.",
+    "removeConfirmation": false
+  },
+  "review": {
+    "formBehindTabComment": "Hyva renders no product tabs at all; the review form is in the page and its Alpine component initialises when scrolled into view.",
+    "formBehindTab": false
+  }
+}

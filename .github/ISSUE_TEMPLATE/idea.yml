@@ -1,0 +1,20 @@
+name: Idea, or disagreement
+description: A suggestion, a missing test, a module worth a package, or a view that the approach is wrong
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Disagreement about the approach counts, and is wanted while this is
+        still 0.x and the shape can still change.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: What it would let you do, or what it would stop going wrong.

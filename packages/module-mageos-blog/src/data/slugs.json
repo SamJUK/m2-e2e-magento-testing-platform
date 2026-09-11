@@ -1,0 +1,13 @@
+{
+  "blog": {
+    "index": "/blog",
+    "postPrefix": "/blog/",
+    "categoryPrefix": "/blog/category/",
+    "tagPrefix": "/blog/tag/",
+    "rss": "/blog/rss",
+    "admin": {
+      "newPost": "mageos_blog/post/new",
+      "postGrid": "mageos_blog/post/"
+    }
+  }
+}

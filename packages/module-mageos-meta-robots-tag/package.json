@@ -1,0 +1,44 @@
+{
+  "name": "@samjuk/e2e-m2-module-mageos-meta-robots-tag",
+  "version": "0.1.0",
+  "description": "MageOS_MetaRobotsTag E2E tests for Magento 2 (mage-os/module-meta-robots-tag)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "e2eModule": {
+    "testDir": "dist/tests"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm clean && pnpm build"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@samjuk/e2e-m2-playwright-core": "^0.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@samjuk/e2e-m2-playwright-core": "workspace:*",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamJUK/m2-e2e-magento-testing-platform.git",
+    "directory": "packages/module-mageos-meta-robots-tag"
+  },
+  "license": "OSL-3.0"
+}

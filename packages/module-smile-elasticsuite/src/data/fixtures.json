@@ -1,0 +1,9 @@
+{
+  "elasticsuite": {
+    "spellcheckNoticeTextComment": "A fragment of the notice ElasticSuite renders when a query matched nothing exactly and it fell back to fuzzy matching. Native Magento has no equivalent, which is what makes it proof the engine in use is ElasticSuite and not the stock one.",
+    "spellcheckNoticeText": "closest matches",
+    "suggestEndpoint": "/search/ajax/suggest",
+    "productSuggestionType": "product",
+    "termSuggestionType": "term"
+  }
+}
