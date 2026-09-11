@@ -87,10 +87,13 @@ pnpm version-packages   # apply versions
 pnpm release            # build + publish
 ```
 
-In CI this is `release.yml`, committed disabled. It publishes to npm through
-**trusted publishing (OIDC)**. GitHub Actions mints a short-lived token per
-run, so no publishing credential is stored anywhere. Its header lists what has
-to be true before it works.
+In CI this is `release.yml`. It publishes to npm through **trusted publishing
+(OIDC)**: GitHub Actions proves its identity to npm directly and npm mints a
+short-lived token for that one run, so no publishing credential is stored
+anywhere. The two steps whose reasons are not obvious carry them inline, being
+the `npm install -g npm@^11` (Node 22 ships npm 10, which has no OIDC) and the
+use of `changeset publish` rather than `pnpm publish` (pnpm's own publish has
+no OIDC support yet).
 
 ## If `pnpm install` refuses the packages
 

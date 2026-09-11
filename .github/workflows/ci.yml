@@ -93,3 +93,6 @@ jobs:
 
       - name: Module packages ship discoverable specs
         run: node scripts/check-module-packaging.mjs
+
+      - name: Scaffolder tarball scaffolds correctly
+        run: node scripts/check-scaffold-tarball.mjs
