@@ -95,6 +95,32 @@ the `npm install -g npm@^11` (Node 22 ships npm 10, which has no OIDC) and the
 use of `changeset publish` rather than `pnpm publish` (pnpm's own publish has
 no OIDC support yet).
 
+## Releases and changelogs
+
+Three surfaces could record a release. Only two are used.
+
+| | |
+|---|---|
+| npm | the record of what shipped |
+| `packages/*/CHANGELOG.md` | the detail. Written by changesets, never by hand |
+| GitHub releases | rare, hand-cut milestones only |
+
+**Per-package GitHub releases are deliberately not enabled.** Core, the themes
+and the modules are linked, so one core change publishes eight packages and
+would produce eight near-identical releases at once. The releases page stops
+answering "what is new in this project" the first time that happens, and the
+detail it would carry is already in each package's changelog.
+
+So a GitHub release means a milestone worth telling people about, and gets cut
+by hand. Most published versions have no tag and no release, and that is the
+intended state rather than a gap: `v0.1.1` of the scaffolder exists on npm and
+in its own changelog, which is the whole record it needs.
+
+There is no repository-level changelog. There was, and it drifted out of date
+within a single release, because a repository-level version is a fiction here:
+`create-magento-e2e` is not in the linked group, so the project is already two
+versions at once.
+
 ## If `pnpm install` refuses the packages
 
 pnpm 11 declines anything published in the last week
