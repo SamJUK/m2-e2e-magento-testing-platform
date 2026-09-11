@@ -1,6 +1,6 @@
 {
   "name": "@samjuk/create-magento-e2e",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold the Magento 2 E2E suite into a store's dev/tests/e2e",
   "bin": {
     "create-magento-e2e": "bin/create.js"
