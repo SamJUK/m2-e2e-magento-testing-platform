@@ -1,20 +1,3 @@
-# Publishes the @samjuk/* packages to public npm using trusted publishing
-# (OIDC) — no long-lived credential anywhere.
-#
-# Committed DISABLED (`.disabled` suffix). Rename to `release.yml` to enable.
-#
-# Before enabling, two things must already be true:
-#
-#   1. Every package exists on npm. A trusted publisher can only be attached to
-#      a package that has been published at least once, so the very first
-#      release is done interactively from a laptop. One-time bootstrap.
-#   2. Each package has a trusted publisher on npm naming this repository and
-#      THIS workflow filename. Configurations created after 2026-09-03 default
-#      to stage-only — tick "allow direct publish" too, or `changeset publish`
-#      stages the versions and a maintainer promotes each one by hand.
-#
-# No NPM_TOKEN. If you find yourself adding one, the trust relationship is
-# misconfigured and the token is papering over it.
 name: Release
 
 on:
@@ -26,8 +9,6 @@ concurrency: release-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
-  # Lets this job mint the short-lived OIDC token npm exchanges for publish
-  # rights. Without it, publishing fails as unauthorised.
   id-token: write
 
 jobs:
