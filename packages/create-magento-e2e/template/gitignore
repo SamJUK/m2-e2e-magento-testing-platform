@@ -1,0 +1,18 @@
+# .env holds the admin credentials for the store this suite drives. Ignored
+# here rather than relying on the store repo's own rules: this directory is
+# meant to be committed, and the README tells you to negate any `/dev/*` rule
+# that would swallow it, which is exactly the state where .env stops being
+# covered by anything.
+.env
+
+node_modules/
+*.tsbuildinfo
+
+# Playwright output
+test-results/
+test-report/
+playwright-report/
+blob-report/
+
+# Database dumps taken by the dump-restore strategy
+var/

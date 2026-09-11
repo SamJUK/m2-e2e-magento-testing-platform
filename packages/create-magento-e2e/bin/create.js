@@ -30,11 +30,18 @@ if (moduleName !== undefined) {
 const TEMPLATE = path.join(__dirname, '..', 'template');
 const target = path.resolve(positional[0] || 'dev/tests/e2e');
 
+// npm REFUSES to put a file called `.gitignore` in a tarball. It is on the
+// always-excluded list, so a template shipping one works from a checkout and
+// silently ships without it from the registry - which is the whole reason the
+// scaffolded .env was committable. The templates hold it as `gitignore` and it
+// is renamed on the way out.
+const DOTFILES = { gitignore: '.gitignore' };
+
 function copyDir(from, to) {
   fs.mkdirSync(to, { recursive: true });
   for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
     const src = path.join(from, entry.name);
-    const dest = path.join(to, entry.name);
+    const dest = path.join(to, DOTFILES[entry.name] ?? entry.name);
     if (entry.isDirectory()) copyDir(src, dest);
     else if (!fs.existsSync(dest)) fs.copyFileSync(src, dest);
     else console.log(`  kept existing ${path.relative(target, dest)}`);
@@ -68,7 +75,7 @@ function scaffoldModule(name, dir, scope) {
     fs.mkdirSync(into, { recursive: true });
     for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
       const src = path.join(from, entry.name);
-      const dest = path.join(into, entry.name);
+      const dest = path.join(into, DOTFILES[entry.name] ?? entry.name);
       if (entry.isDirectory()) walk(src, dest);
       else fs.writeFileSync(dest, substitute(fs.readFileSync(src, 'utf8')));
     }
