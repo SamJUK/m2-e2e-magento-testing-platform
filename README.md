@@ -121,7 +121,7 @@ The store's own tests and its `app/code` specs share one composition point throu
 
 **119 tests.** 95 per theme, plus 24 across the five module packages. Every one has been executed against a real Magento install.
 
-Tags run a subset: `--grep @smoke`, `--grep @admin`, `--grep @negative`.
+Tags run a subset: `--grep @smoke`, `--grep @admin`, `--grep @negative`. Execution tiers (smoke, critical revenue paths, admin, and extended) and the consequence-based placement rule are documented in [docs/COVERAGE.md](./docs/COVERAGE.md#test-execution-tiers).
 
 Rejection is asserted, not merely absence of success. Twelve `@negative` tests cover invalid credentials, missing required fields, malformed email, a duplicate registration email, an incomplete checkout address, invalid coupons, out-of-stock add-to-cart, guest wish list access, empty search results and the 404 page.
 
@@ -131,7 +131,7 @@ Rejection is asserted, not merely absence of success. Twelve `@negative` tests c
 
 | | |
 |---|---|
-| [Test coverage](./docs/COVERAGE.md) | Every test by area, the gaps, and what is out of scope |
+| [Test coverage](./docs/COVERAGE.md) | Every test by area, execution tiers, placement rules, and gaps |
 | [Adapting the suite to a store](./docs/adapting-a-store.md) | Exclusions and reason codes, where a new test belongs, database rollback |
 | [Module test packages](./docs/modules.md) | Writing one, the conventions it has to follow, and modules worth covering |
 | [Development](./docs/development.md) | Monorepo setup, test discovery, creating packages, releasing |

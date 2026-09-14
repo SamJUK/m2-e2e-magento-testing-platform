@@ -24,6 +24,27 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 
 ---
 
+## Test execution tiers
+
+Running every test on every commit is impractical on a real Magento store. Tiers allow projects and CI pipelines to select the appropriate slice without reading the full test list.
+
+| Tier | Answers | Command | Suggested Use |
+|---|---|---|---|
+| **Smoke** | Is the store reachable and can essential endpoints respond? | `pnpm test:smoke`<br>`playwright test --grep @smoke` | PR checks, post-deploy checks, fast local loop |
+| **Critical** | Can customers browse, add products to cart, and purchase without revenue loss? | `playwright test --grep "@smoke\|@checkout\|@cart"` | PR merge gate, master push CI, staging checks |
+| **Admin** | Can store administrators log in and manage orders/products? | `pnpm test:admin`<br>`playwright test --grep @admin` | Master push, nightly runs, pre-release checks |
+| **Extended / Full** | Does the entire suite pass across all edge cases, validations, and modules? | `pnpm test`<br>`playwright test` | Pre-release sign-off, scheduled nightly runs |
+
+### Placement rule: Tier by consequence, not by shape
+
+When adding a new test, place it based on **consequence of failure**, not structural similarity:
+
+- **Revenue and availability impact $\to$ Critical / Smoke**: A `@negative` test that prevents revenue loss (for example, an out-of-stock product cannot be added to cart, an invalid coupon is rejected, or checkout halts corrupted payment) belongs in the highest-impact tier.
+- **Copy and minor validation $\to$ Extended**: A `@negative` test asserting specific field validation copy or an edge-case form error belongs in Extended.
+- Two tests may have identical structure and assertion shape, yet sit three tiers apart based on whether a failure halts revenue or merely displays imperfect copy.
+
+---
+
 ## Storefront
 
 ### Health & infrastructure
