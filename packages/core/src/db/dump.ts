@@ -4,7 +4,9 @@ import type { ProjectConfig } from '../config/schema';
 
 /**
  * Dumps the Magento database using the project's shell hooks.
- * No-ops gracefully if dbDump hook is not configured.
+ *
+ * The no-hook branch is unreachable under 'dump-restore', which global setup
+ * refuses without it; it remains for callers outside that strategy.
  */
 export async function dumpDatabase(config: ProjectConfig): Promise<void> {
   if (!config.shell?.dbDump) {

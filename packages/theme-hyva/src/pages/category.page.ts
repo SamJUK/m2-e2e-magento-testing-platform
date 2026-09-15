@@ -54,6 +54,9 @@ export class CategoryPage implements ICategoryPage {
     // The sorter's change handler binds after the markup, so a selection made
     // too early fires into nothing. Retried as one unit.
     await expect(async () => {
+      // A previous attempt's navigation may have landed late; selecting again
+      // would queue a second one and return with it still in flight.
+      if (this.page.url() !== before) return;
       await this.sorterDropdown.selectOption(value ?? wanted.toLowerCase(), { timeout: 15_000 });
       await this.page.waitForURL((url) => url.toString() !== before, {
         waitUntil: 'domcontentloaded',
@@ -357,7 +360,7 @@ export class CategoryPage implements ICategoryPage {
       .locator(this.data.selectors.categoryPage.listingPage.filterGroupSelector)
       .filter({ hasText: filterName })
       .first();
-    const option = filterItem.getByText(filterValue).first();
+    const option = filterItem.getByText(filterValue, { exact: true }).first();
 
     let count: number | null = null;
     await expect(async () => {

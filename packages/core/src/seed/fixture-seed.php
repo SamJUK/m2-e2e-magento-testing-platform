@@ -225,7 +225,7 @@ $upsertProduct = function (array $spec, bool $inStock) use ($om, $productReposit
                 'has_options' => 1,
                 'required_options' => $hasRequiredOption ? 1 : 0,
             ],
-            ['entity_id = ?' => (int) $product->getId()]
+            [$linkField . ' = ?' => (int) $product->getData($linkField)]
         );
 
         // The option rows are written against the product id, so the instance
