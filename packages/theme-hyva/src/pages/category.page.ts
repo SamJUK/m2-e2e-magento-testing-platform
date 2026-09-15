@@ -51,10 +51,15 @@ export class CategoryPage implements ICategoryPage {
     // the URL to change rather than networkidle — analytics and marketing
     // beacons keep real stores' network busy forever.
     const before = this.page.url();
-    await this.sorterDropdown.selectOption(value ?? wanted.toLowerCase());
-    await this.page.waitForURL((url) => url.toString() !== before, {
-      waitUntil: 'domcontentloaded',
-    });
+    // The sorter's change handler binds after the markup, so a selection made
+    // too early fires into nothing. Retried as one unit.
+    await expect(async () => {
+      await this.sorterDropdown.selectOption(value ?? wanted.toLowerCase());
+      await this.page.waitForURL((url) => url.toString() !== before, {
+        waitUntil: 'domcontentloaded',
+        timeout: 15_000,
+      });
+    }).toPass({ timeout: 90_000 });
   }
 
   async changeSortOrderDirection(): Promise<void> {
@@ -307,5 +312,70 @@ export class CategoryPage implements ICategoryPage {
     await this.page.locator(this.data.selectors.currencySwitcher.triggerSelector).click();
     await this.page.getByRole('link', { name: currency }).click();
     await this.page.waitForLoadState('networkidle');
+  }
+
+  /**
+   * The listing's total result count, read off the toolbar.
+   *
+   * Magento words it "12 Items" on a single page and "Items 1-9 of 12" once it
+   * paginates, so the last integer is the total in both shapes. Counting tiles
+   * instead would silently measure a page rather than a result set.
+   */
+  async getResultCount(): Promise<number> {
+    const amount = this.page
+      .locator(this.data.selectors.categoryPage.listingPage.toolbarAmountSelector)
+      .filter({ visible: true })
+      .first();
+
+    let total: number | null = null;
+    await expect(async () => {
+      const text = (await amount.textContent()) ?? '';
+      const numbers = text.match(/\d+/g);
+      expect(numbers, `the toolbar reports a result count (read "${text.trim()}")`).not.toBeNull();
+      total = Number(numbers![numbers!.length - 1]);
+    }).toPass({ timeout: 30_000 });
+
+    return total!;
+  }
+
+  /** The sorter's current selection, as its visible option text. */
+  async getSelectedSortOrder(): Promise<string> {
+    const selected = this.sorterDropdown.locator('option[selected], option:checked').first();
+    return ((await selected.textContent()) ?? '').trim();
+  }
+
+  /**
+   * The result count Magento prints beside a layered-navigation option.
+   *
+   * Read before the filter is applied, so it can be compared against what the
+   * filter actually returns. A facet that advertises a count it cannot deliver
+   * is the classic symptom of a stale catalog index, and it is invisible until
+   * someone clicks it.
+   */
+  async getFilterOptionCount(filterName: string, filterValue: string): Promise<number> {
+    const filterItem = this.layeredNavigation
+      .locator(this.data.selectors.categoryPage.listingPage.filterGroupSelector)
+      .filter({ hasText: filterName })
+      .first();
+    const option = filterItem.getByText(filterValue).first();
+
+    let count: number | null = null;
+    await expect(async () => {
+      if (!(await option.isVisible().catch(() => false))) {
+        await filterItem.locator(this.data.selectors.categoryPage.listingPage.filterGroupTitleSelector).click();
+      }
+      await expect(option).toBeVisible({ timeout: 5_000 });
+      // The count lives on the option's ROW, not on the label itself.
+      const row = filterItem.locator('li').filter({ hasText: filterValue }).first();
+      const text = (await row.textContent()) ?? '';
+      const numbers = text.match(/\d+/g);
+      expect(
+        numbers,
+        `the "${filterValue}" option advertises a count (read "${text.trim()}")`,
+      ).not.toBeNull();
+      count = Number(numbers![numbers!.length - 1]);
+    }).toPass({ timeout: 60_000 });
+
+    return count!;
   }
 }

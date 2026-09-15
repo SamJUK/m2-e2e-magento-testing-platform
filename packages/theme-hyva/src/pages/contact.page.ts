@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { waitForFormKey, tamperFormKey } from '@samjuk/e2e-m2-playwright-core';
 import type { HyvaData } from '../data/types';
 import type { IContactPage } from './types';
 
@@ -114,5 +115,28 @@ export class ContactPage implements IContactPage {
       'typeMismatch',
       'the malformed address is reported as not an email address',
     );
+  }
+
+  /**
+   * Submits the contact form carrying a form key the session never issued.
+   *
+   * `waitForFormKey` runs FIRST on purpose: on a full-page-cached store
+   * `mage/common` rewrites every rendered form_key input from the cookie on
+   * DOM ready, so tampering before that lands would simply be undone.
+   */
+  async expectContactFormIsRejectedForInvalidFormKey(): Promise<void> {
+    await this.fillForm();
+    await waitForFormKey(this.page);
+    await tamperFormKey(this.page);
+    await this.sendFormButton.click();
+
+    await expect(
+      this.page.getByText(this.data.fixtures.security.invalidFormKeyText),
+      'the store refuses a POST whose form key it never issued',
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(
+      this.page.getByText(this.data.fixtures.contact.notificationText),
+      'nothing was sent',
+    ).toHaveCount(0);
   }
 }

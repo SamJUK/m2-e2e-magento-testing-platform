@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { readMoney, waitForFormKey, type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { readMoney, waitForFormKey, type MergedData , sprintf } from '@samjuk/e2e-m2-playwright-core';
 import type { IProductPage, StockStatus } from './types';
 
 export class ProductPage implements IProductPage {
@@ -256,4 +256,85 @@ export class ProductPage implements IProductPage {
   async addBundleToCart(): Promise<void> {
     await this.clickAddToCart();
   }
+
+  /**
+   * Adds a product that carries custom options, answering them by title.
+   *
+   * Matched with a start-anchored regex rather than a plain substring, because
+   * themes decorate the option's accessible name: Hyva renders "Engraving *"
+   * for a required option and "Gift Message + $5.00" for a priced one. A bare
+   * `getByLabel('Gift Message')` substring-matches more than one field on that
+   * markup, and `.first()` then silently fills the WRONG option - which reads
+   * as the surcharge never applying rather than as a locator fault.
+   */
+  async addProductWithOptionsToCart(
+    url: string,
+    options: Record<string, string>,
+  ): Promise<void> {
+    await this.page.goto(url);
+    await waitForFormKey(this.page);
+
+    for (const [title, value] of Object.entries(options)) {
+      await this.page.getByLabel(optionLabelPattern(title)).first().fill(value);
+    }
+
+    await this.clickAddToCart();
+  }
+
+  /**
+   * Asserts a REQUIRED custom option blocks the basket until it is answered.
+   *
+   * Deliberately does not reuse `clickAddToCart`: that waits for the store to
+   * accept a POST, and the whole point here is that no POST is made. The store
+   * refusing client-side is the correct behaviour, so waiting for a request
+   * that will never exist would hang rather than fail.
+   */
+  async expectRequiredOptionBlocksAddToCart(
+    url: string,
+    requiredOptionTitle: string,
+  ): Promise<void> {
+    await this.page.goto(url);
+    await waitForFormKey(this.page);
+
+    let requested = false;
+    const watch = (request: { method: () => string; url: () => string }) => {
+      if (request.method() === 'POST' && request.url().includes('checkout/cart/add')) {
+        requested = true;
+      }
+    };
+    this.page.on('request', watch);
+
+    try {
+      await this.addToCartButton.click();
+
+      // Substituted, not used raw: Hyva names the field in its message
+      // ("Engraving field is required.") while Luma uses one sentence for
+      // every field, so the core value simply carries no placeholder.
+      await expect(
+        this.page
+          .locator(this.data.selectors.validation.fieldErrorSelector)
+          .filter({
+            hasText: sprintf(
+              this.data.fixtures.validation.requiredFieldText,
+              requiredOptionTitle,
+            ),
+          })
+          .first(),
+        'the store asks for the required option before it will take the order',
+      ).toBeVisible({ timeout: 30_000 });
+    } finally {
+      this.page.off('request', watch);
+    }
+
+    expect(requested, 'nothing was added to the cart').toBe(false);
+  }
+}
+
+/**
+ * Matches a custom option field by the start of its label, so a theme that
+ * appends a required marker or a price to the name still resolves, and one
+ * option's title cannot match another's decorated name.
+ */
+function optionLabelPattern(title: string): RegExp {
+  return new RegExp('^\\s*' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
 }

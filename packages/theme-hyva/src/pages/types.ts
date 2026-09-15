@@ -208,6 +208,14 @@ export interface IAccountPage {
     currentPassword: string,
   ): Promise<void>;
   /** Asserts the dashboard reports the customer the server actually holds. */
+  /**
+   * Attempts to change the account email with the wrong current password and
+   * asserts the store refuses it.
+   */
+  expectEmailChangeIsRejectedForWrongPassword(
+    newEmail: string,
+    wrongPassword: string,
+  ): Promise<void>;
   expectDashboardShows(details: {
     firstName: string;
     lastName: string;
@@ -230,6 +238,11 @@ export interface IAccountPage {
 }
 
 export interface IRegisterPage {
+  /**
+   * Completes the registration form the order success page hands off to,
+   * without navigating to it first.
+   */
+  completeRegistration(credentials: RegisterCredentials): Promise<void>;
   createNewAccount(credentials: RegisterCredentials): Promise<void>;
   /**
    * Asserts the store refuses a second account on an email that already has
@@ -247,6 +260,11 @@ export interface IForgotPasswordPage {
    * asserts the store confirmed the change.
    */
   setNewPassword(resetUrl: string, newPassword: string): Promise<void>;
+  /**
+   * Follows a reset link that has already been spent and asserts the store
+   * refuses it rather than serving the form again.
+   */
+  expectResetLinkIsRefused(resetUrl: string): Promise<void>;
 }
 
 export interface IAddressBookPage {
@@ -272,6 +290,11 @@ export interface IAddressBookPage {
 
 export interface IContactPage {
   sendContactForm(): Promise<void>;
+  /**
+   * Submits the contact form carrying a form key the session never issued,
+   * and asserts the store refuses the POST outright.
+   */
+  expectContactFormIsRejectedForInvalidFormKey(): Promise<void>;
   /**
    * Submits the contact form with the message left blank and asserts the
    * store refuses it without sending anything.
@@ -354,4 +377,14 @@ export interface CustomerAddress {
   city: string;
   postcode: string;
   telephone: string;
+}
+
+export interface ICookieNoticePage {
+  /**
+   * Asserts the cookie notice renders, that accepting it dismisses it, and
+   * that the acceptance survives a reload.
+   */
+  expectNoticeIsAcceptable(): Promise<void>;
+  /** Asserts no cookie notice is rendered at all. */
+  expectNoNoticeIsRendered(): Promise<void>;
 }

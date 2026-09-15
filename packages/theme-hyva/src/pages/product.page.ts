@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { readMoney, waitForFormKey } from '@samjuk/e2e-m2-playwright-core';
+import { readMoney, waitForFormKey , sprintf } from '@samjuk/e2e-m2-playwright-core';
 import type { HyvaData } from '../data/types';
 import type { IProductPage, StockStatus } from './types';
 
@@ -293,4 +293,99 @@ export class ProductPage implements IProductPage {
   async addBundleToCart(): Promise<void> {
     await this.clickAddToCart();
   }
+
+  /**
+   * Adds a product that carries custom options, answering them by title.
+   *
+   * Matched with a start-anchored regex rather than a plain substring, because
+   * themes decorate the option's accessible name: Hyva renders "Engraving *"
+   * for a required option and "Gift Message + $5.00" for a priced one. A bare
+   * `getByLabel('Gift Message')` substring-matches more than one field on that
+   * markup, and `.first()` then silently fills the WRONG option - which reads
+   * as the surcharge never applying rather than as a locator fault.
+   */
+  async addProductWithOptionsToCart(
+    url: string,
+    options: Record<string, string>,
+  ): Promise<void> {
+    await this.page.goto(url);
+    await waitForFormKey(this.page);
+
+    for (const [title, value] of Object.entries(options)) {
+      await this.page.getByLabel(optionLabelPattern(title)).first().fill(value);
+    }
+
+    await this.clickAddToCart();
+  }
+
+  /**
+   * Asserts a REQUIRED custom option blocks the basket until it is answered.
+   *
+   * Hyva puts `required` on the input and leaves the check to the browser, so
+   * there is no message in the DOM to find - the refusal is a native bubble.
+   * Asserted through the field's own validity state and the form's, the same
+   * way this theme's contact form is, rather than by looking for copy that
+   * this theme never renders.
+   *
+   * Deliberately does not reuse `clickAddToCart`: that waits for the store to
+   * accept a POST, and the whole point here is that no POST is made.
+   */
+  async expectRequiredOptionBlocksAddToCart(
+    url: string,
+    requiredOptionTitle: string,
+  ): Promise<void> {
+    await this.page.goto(url);
+    await waitForFormKey(this.page);
+
+    let requested = false;
+    const watch = (request: { method: () => string; url: () => string }) => {
+      if (request.method() === 'POST' && request.url().includes('checkout/cart/add')) {
+        requested = true;
+      }
+    };
+    this.page.on('request', watch);
+
+    try {
+      const field = this.page
+        .getByLabel(optionLabelPattern(requiredOptionTitle))
+        .first();
+      await this.addToCartButton.click();
+
+      await expect
+        .poll(
+          () =>
+            field.evaluate(
+              (element) => (element as HTMLInputElement | HTMLTextAreaElement).validity.valueMissing,
+            ),
+          {
+            message: 'the store asks for the required option before it will take the order',
+            timeout: 15_000,
+          },
+        )
+        .toBe(true);
+      await expect
+        .poll(
+          () =>
+            this.page
+              .locator(this.data.selectors.productPage.formSelector)
+              .evaluate((form) => (form as HTMLFormElement).checkValidity()),
+          { message: 'the browser refuses to submit the add-to-cart form', timeout: 15_000 },
+        )
+        .toBe(false);
+    } finally {
+      this.page.off('request', watch);
+    }
+
+    expect(requested, 'nothing was added to the cart').toBe(false);
+  }
+
+}
+
+/**
+ * Matches a custom option field by the start of its label, so a theme that
+ * appends a required marker or a price to the name still resolves, and one
+ * option's title cannot match another's decorated name.
+ */
+function optionLabelPattern(title: string): RegExp {
+  return new RegExp('^\\s*' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
 }
