@@ -126,6 +126,70 @@ export class AdminProductPage {
       expect(collapse((await title.textContent()) ?? '')).toBe(collapse(name));
     }).toPass({ timeout: 60_000 });
   }
+
+  /**
+   * Changes a product's URL key and asserts the old URL 301s to the new one.
+   *
+   * The redirect is the point, not the rename. Magento writes a rewrite row
+   * when "Create Permanent Redirect for old URL" is left ticked, and an
+   * upgrade or a customisation that stops it doing so silently 404s every
+   * indexed URL and every inbound link the store already has. Nothing about
+   * the storefront looks broken, which is why it goes unnoticed.
+   *
+   * Asserted with a raw request at `maxRedirects: 0` rather than by following
+   * it in the page: a 302, or a soft 200 rendered at the old URL, would both
+   * satisfy "the browser ended up in the right place" while being the wrong
+   * answer for a search engine.
+   */
+  async changeUrlKeyAndExpectRedirect(
+    searchTerm: string,
+    productName: string,
+    newUrlKey: string,
+    oldUrl: string,
+  ): Promise<void> {
+    const s = this.data.selectors.admin.products;
+
+    await this.openProduct(searchTerm, productName);
+
+    // The URL key lives in a collapsed section; Magento does not render its
+    // fields until the section is opened.
+    await this.page.getByText(s.form.seoSectionLabel, { exact: true }).first().click();
+    const urlKeyField = this.page.getByLabel(s.form.urlKeyFieldLabel, { exact: true });
+    await expect(urlKeyField, 'the SEO section is open').toBeVisible({ timeout: 30_000 });
+    await urlKeyField.fill(newUrlKey);
+
+    // Ticked by default, but asserted rather than assumed: without it there is
+    // no rewrite row and this test would be checking nothing.
+    const redirectCheckbox = this.page.getByLabel(s.form.createRedirectCheckboxLabel, {
+      exact: true,
+    });
+    await expect(
+      redirectCheckbox,
+      'the store is set to write a permanent redirect for the old URL',
+    ).toBeChecked();
+
+    await this.page
+      .getByRole('button', { name: s.form.saveButtonLabel, exact: true })
+      .first()
+      .click();
+    await this.page.waitForLoadState('domcontentloaded');
+    await expect(
+      this.page.getByText(this.data.fixtures.admin.products.savedNotificationText),
+      'the admin reports the product was saved',
+    ).toBeVisible({ timeout: 60_000 });
+
+    // Retried: the url_rewrite row is written inside the save, but the page
+    // cache for the old URL is invalidated behind it, so the first request can
+    // still be served the previously cached 200.
+    await expect(async () => {
+      const response = await this.page.request.get(oldUrl, { maxRedirects: 0 });
+      expect(response.status(), `${oldUrl} answers with a permanent redirect`).toBe(301);
+      expect(
+        response.headers()['location'] ?? '',
+        'the redirect points at the new URL key',
+      ).toContain(newUrlKey);
+    }).toPass({ timeout: 60_000 });
+  }
 }
 
 /** Collapses runs of whitespace so a name comparison survives real catalog data. */

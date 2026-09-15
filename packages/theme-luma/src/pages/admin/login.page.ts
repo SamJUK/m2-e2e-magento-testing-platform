@@ -30,4 +30,21 @@ export class AdminLoginPage implements IAdminLoginPage {
     await this.passwordField.fill(password);
     await this.submitButton.click();
   }
+
+  /**
+   * Signs in as someone other than the configured admin.
+   *
+   * Drops the current session first: Magento keeps an admin signed in across a
+   * fresh visit to the login route, so without this the second sign-in would
+   * silently never happen and the test would assert against the FIRST user's
+   * permissions.
+   */
+  async loginAs(username: string, password: string): Promise<void> {
+    await this.page.context().clearCookies();
+    await this.page.goto(this.adminSlug, { waitUntil: 'domcontentloaded' });
+    await this.usernameField.fill(username);
+    await this.passwordField.fill(password);
+    await this.submitButton.click();
+    await this.page.waitForLoadState('domcontentloaded');
+  }
 }

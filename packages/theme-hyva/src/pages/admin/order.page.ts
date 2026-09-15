@@ -137,6 +137,7 @@ export class AdminOrderPage implements IAdminOrderPage {
    * the mask is raised a beat *after* the click, so checking for it
    * immediately would find the page already "idle" and race the reload.
    */
+
   private async settle(): Promise<void> {
     const mask = this.page.locator(this.data.selectors.admin.orders.create.loadingMaskSelector);
     await this.page.waitForTimeout(500);
@@ -176,14 +177,28 @@ export class AdminOrderPage implements IAdminOrderPage {
     // delivered into the gap is accepted by the element and does nothing at
     // all — no error, no request, no change. Observed on a stock store for
     // both of the controls below and for the shipping-rates link.
+    // Multi-store installs interpose a store picker here. Driven by the page's
+    // current state, or re-clicking would oscillate between the two.
+    const accountSection = page.locator(s.accountSectionSelector);
+    const storeViews = page.locator(s.storeViewRadioSelector);
+
     await expect(async () => {
-      await page.getByRole('button', { name: s.newCustomerButtonLabel, exact: true }).click();
+      if (await accountSection.isVisible()) {
+        return;
+      }
+
+      if ((await storeViews.count()) > 0 && (await storeViews.first().isVisible())) {
+        await storeViews.first().click();
+      } else {
+        await page.getByRole('button', { name: s.newCustomerButtonLabel, exact: true }).click();
+      }
       await this.settle();
+
       await expect(
-        page.locator(s.accountSectionSelector),
+        accountSection,
         'choosing a customer opens the order form',
       ).toBeVisible({ timeout: 15_000 });
-    }).toPass({ timeout: 90_000 });
+    }).toPass({ timeout: 120_000 });
 
     // --- product
     //

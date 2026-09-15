@@ -131,7 +131,12 @@ export class CheckoutPage implements ICheckoutPage {
     const savedAddressCount = Object.keys(config.customerData?.addresses ?? {}).length;
 
     if (isGuest) {
-      await shippingForm.getByLabel(s.billing.emailFieldLabel).fill(order.email);
+      const emailField = shippingForm.getByLabel(s.billing.emailFieldLabel);
+      // checkoutConfig arriving does not mean Knockout has rendered the form.
+      await expect(emailField, 'the guest checkout email field is ready').toBeEditable({
+        timeout: 120_000,
+      });
+      await emailField.fill(order.email);
     }
 
     if (savedAddressCount > 0) {
@@ -232,7 +237,11 @@ export class CheckoutPage implements ICheckoutPage {
     await this.page.waitForFunction(() => 'checkoutConfig' in window, undefined, {
       timeout: 45_000,
     });
-    await shippingForm.getByLabel(s.billing.emailFieldLabel).fill(order.email);
+    const guestEmailField = shippingForm.getByLabel(s.billing.emailFieldLabel);
+    await expect(guestEmailField, 'the guest checkout email field is ready').toBeEditable({
+      timeout: 120_000,
+    });
+    await guestEmailField.fill(order.email);
     await this.fillNewShippingAddress(order);
     await shippingForm.locator(s.billing.streetAddressFieldSelector).clear();
 
@@ -651,5 +660,31 @@ export class CheckoutPage implements ICheckoutPage {
         await expect(box).toBeChecked({ timeout: 2_000 });
       }).toPass({ timeout: 20_000 });
     }
+  }
+
+  /**
+   * Takes Magento's "Create an Account" offer on the order success page.
+   *
+   * The offer only appears for a guest whose email has no account yet. Stops
+   * once the registration form is up: filling it in belongs to RegisterPage,
+   * which owns the selectors for it on each theme.
+   */
+  async startAccountCreationFromOrderSuccess(): Promise<void> {
+    const s = this.data.selectors.checkout.success;
+
+    const createAccount = this.page
+      .getByRole('link', { name: s.createAccountButtonLabel })
+      .or(this.page.getByRole('button', { name: s.createAccountButtonLabel }))
+      .first();
+    await expect(
+      createAccount,
+      'the success page offers the guest an account',
+    ).toBeVisible({ timeout: 30_000 });
+    await createAccount.click();
+
+    await this.page.waitForURL(/customer\/account\/create/, {
+      timeout: 45_000,
+      waitUntil: 'domcontentloaded',
+    });
   }
 }

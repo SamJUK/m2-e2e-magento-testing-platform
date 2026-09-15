@@ -442,6 +442,48 @@ export class AccountPage implements IAccountPage {
     ).toBeVisible();
   }
 
+
+  /**
+   * Attempts an email change with the wrong current password and asserts the
+   * store refuses it AND leaves the stored address alone.
+   *
+   * Magento requires the current password before it will move the address an
+   * account signs in with. A customisation that drops that check turns any
+   * borrowed session - a shared machine, an unlocked laptop - into a full
+   * account takeover, and nothing about the storefront looks different.
+   */
+  async expectEmailChangeIsRejectedForWrongPassword(
+    newEmail: string,
+    wrongPassword: string,
+  ): Promise<void> {
+    const s = this.data.selectors.accountEditPage;
+    await this.page.goto(this.data.slugs.account.editAccount, {
+      waitUntil: 'domcontentloaded',
+    });
+    await waitForFormKey(this.page);
+
+    const form = this.page.locator(s.formSelector);
+    const emailField = form.getByLabel(s.emailFieldLabel, { exact: true });
+
+    await expect(async () => {
+      await form.locator(s.changeEmailCheckboxSelector).check();
+      await expect(emailField).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 45_000 });
+
+    await emailField.fill(newEmail);
+    await form.getByLabel(s.currentPasswordFieldLabel, { exact: true }).fill(wrongPassword);
+    await form.getByRole('button', { name: s.saveButtonLabel }).click();
+
+    await expect(
+      this.page.getByText(this.data.fixtures.account.editAccount.wrongCurrentPasswordText),
+      'the store refuses an email change without the current password',
+    ).toBeVisible({ timeout: 45_000 });
+    await expect(
+      this.page.getByText(this.data.fixtures.account.editAccount.notificationText),
+      'nothing was saved',
+    ).toHaveCount(0);
+  }
+
   /**
    * Asserts the dashboard reports the customer the server actually holds.
    *
@@ -623,6 +665,37 @@ export class ForgotPasswordPage implements IForgotPasswordPage {
       'the store confirms the password was updated',
     ).toBeVisible();
   }
+
+  /**
+   * Follows a reset link that is no longer valid and asserts the store refuses
+   * it.
+   *
+   * Magento cannot distinguish a token that has already been spent from one
+   * that has aged out: `Customer\Controller\Account\CreatePassword` only asks
+   * whether the token matches the one on the customer row, and a completed
+   * reset clears that row. Both cases land on the same message, which is why
+   * this covers single use rather than expiry-by-age - the latter would need
+   * the store's token lifetime changed underneath the run.
+   */
+  async expectResetLinkIsRefused(resetUrl: string): Promise<void> {
+    await this.page.goto(resetUrl, { waitUntil: 'domcontentloaded' });
+
+    await expect(
+      this.page.getByText(this.data.fixtures.account.resetPassword.expiredLinkText),
+      'the store refuses a reset link that has already been used',
+    ).toBeVisible({ timeout: 30_000 });
+
+    // The message alone would also be satisfied by a page that rendered the
+    // error AND the form. Assert the form is genuinely gone, because a reset
+    // form still reachable on a spent token is the whole bug.
+    await expect(
+      this.page.locator(this.data.selectors.resetPasswordPage.formSelector).getByLabel(
+        this.data.selectors.resetPasswordPage.newPasswordFieldLabel,
+        { exact: true },
+      ),
+      'the reset form is not served on a spent token',
+    ).toHaveCount(0);
+  }
 }
 
 export class RegisterPage implements IRegisterPage {
@@ -704,4 +777,31 @@ export class RegisterPage implements IRegisterPage {
       new RegExp(`${this.data.slugs.account.register.replace(/\/+$/, '')}/?$`),
     );
   }
+
+  /**
+   * Completes the registration form the order success page hands off to,
+   * without navigating to it.
+   *
+   * Magento's delegated flow (checkout/account/delegateCreate) is supposed to
+   * arrive with the order's name and email already in the form. On a
+   * full-page-cached store it does not - the create page is cacheable, so what
+   * gets served is the blank cached copy and every field has to be filled. The
+   * email still has to MATCH the order, or the account it creates is a
+   * stranger to it.
+   */
+  async completeRegistration(credentials: RegisterCredentials): Promise<void> {
+    await waitForFormKey(this.page);
+    await this.firstNameField.fill(credentials.firstName);
+    await this.lastNameField.fill(credentials.lastName);
+    await this.emailField.fill(credentials.email);
+    await this.passwordField.fill(credentials.password);
+    await this.confirmPasswordField.fill(credentials.password);
+    await this.submitButton.click();
+
+    await expect(
+      this.page.getByText(this.data.fixtures.account.register.notificationText),
+      'the store confirms the account was created',
+    ).toBeVisible({ timeout: 45_000 });
+  }
+
 }
