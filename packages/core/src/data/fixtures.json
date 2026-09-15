@@ -8,13 +8,10 @@
   "security": {
     "invalidFormKeyText": "Invalid Form Key. Please refresh the page."
   },
-
   "cookieRestrictionComment": "Only read when features.security.cookieRestriction is true. Magento renders this notice from Magento_Cookie's 'notices' block.",
   "cookieRestriction": {
-    "noticeText": "We use cookies to make your experience better.",
-    "acceptButtonLabel": "Allow Cookies"
+    "noticeText": "We use cookies to make your experience better."
   },
-
   "notFound": {
     "headingText": "Whoops, our bad..."
   },
@@ -190,8 +187,7 @@
         "filterName": "Style",
         "filterValue": "Insulated"
       },
-
-      "currencySymbolAfterSwitch": "€",
+      "currencySymbolAfterSwitch": "\u20ac",
       "breadcrumbTrailComment": "The breadcrumb trail `slugs.categories.listingPage` renders, outermost first. Asserted in full rather than by its last entry, so a theme that silently stops rendering the intermediate categories still fails.",
       "breadcrumbTrail": [
         "Home",

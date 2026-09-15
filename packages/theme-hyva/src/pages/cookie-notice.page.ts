@@ -15,7 +15,6 @@ export class CookieNoticePage implements ICookieNoticePage {
   constructor(page: Page, private data: HyvaData) {
     this.page = page;
     const s = data.selectors.cookieRestriction;
-    this.page = page;
     this.notice = page.locator(s.noticeSelector);
     this.acceptButton = page.locator(s.acceptButtonSelector);
   }
