@@ -12,7 +12,9 @@
     "invalidLogin": {
       "email": "e2e-no-such-customer@example.com",
       "password": "NotThePassword1!"
-    }
+    },
+    "lockoutFailuresComment": "How many failed sign-ins the store tolerates before it locks the account. Magento's own default is 10 (Magento_Customer etc/config.xml, customer/password/lockout_failures), inside a 10 minute window. Only read when features.security.customerLockout is true.",
+    "lockoutFailures": 10
   },
   "product": {
     "custom_quantity": 2,
@@ -27,7 +29,9 @@
       "sortOrderByNameComment": "The sorter option that orders the listing alphabetically by product name. Selected by its visible text, like `sortOrder` above.",
       "sortOrderByName": "Product Name",
       "resultsPerPageComment": "A results-per-page option the limiter offers, as its option VALUE. `slugs.categories.pagedListingPage` must list MORE visible products than this, or the tile count can never equal it and the assertion becomes untestable rather than merely false. Must also differ from the store's default page size, or the test proves nothing.",
-      "resultsPerPage": "24"
+      "resultsPerPage": "24",
+      "maxResultsPerPageComment": "The LARGEST results-per-page option the limiter offers. Used where a test has to see a whole category at once rather than page through it.",
+      "maxResultsPerPage": "36"
     }
   },
   "reviewComment": "The review the @review test posts. `summaryPrefix` is only the prefix - the spec appends a per-run token, because the admin grid is filtered on the summary and a shared string would match every previous run's review as well.",

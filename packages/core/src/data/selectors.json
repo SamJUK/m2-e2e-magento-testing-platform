@@ -178,7 +178,9 @@
       "pagerSelectorComment": "The pager. `pageLinkSelector` is a %s-substituted href match rather than a link label: Luma numbers its links `<span>2</span>` while Hyva labels them `aria-label=\"Page 2\"`, but both point at the same `?p=<n>` URL. The 'next' arrow matches the same href, so the page object takes the first hit.",
       "pagerSelector": ".pages",
       "pageLinkSelector": "a[href*=\"p=%s\"]",
-      "layeredNavigation": "[id=\"layered-filter-block\"]",
+      "toolbarAmountSelectorComment": "The toolbar's result count. Magento renders it as either \"12 Items\" or \"Items 1-9 of 12\" depending on whether the listing paginates, so the LAST integer in it is the total either way.",
+    "toolbarAmountSelector": ".toolbar-amount",
+    "layeredNavigation": "[id=\"layered-filter-block\"]",
       "appliedFilterItem": ".filter-current .item",
       "appliedFilterLabel": ".filter-label",
       "appliedFilterValue": ".filter-value",
@@ -276,7 +278,9 @@
       "cancelButtonLabel": "Cancel coupon"
     },
     "success": {
-      "block": ".checkout-success"
+      "block": ".checkout-success",
+      "createAccountButtonLabelComment": "Magento offers a guest whose email has no account a one-click registration from the success page. Both stock themes render it from Magento_Checkout's registration block.",
+      "createAccountButtonLabel": "Create an Account"
     }
   },
   "admin": {
@@ -324,6 +328,23 @@
         "confirmButtonLabel": "OK"
       }
     },
+    "permissionsComment": "System > Permissions. The role form asks for the CURRENT admin's password before it will save, and so does the user form - Magento calls it identity verification and the field is labelled the same on both.",
+    "permissions": {
+      "roleNameFieldLabel": "Role Name",
+      "identityPasswordFieldLabel": "Your Password",
+      "roleResourcesTabLabel": "Role Resources",
+      "resourceAccessFieldLabel": "Resource Access",
+      "customResourceAccessOption": "Custom",
+      "saveRoleButtonLabel": "Save Role",
+      "userNameFieldLabel": "User Name",
+      "firstNameFieldLabel": "First Name",
+      "lastNameFieldLabel": "Last Name",
+      "emailFieldLabel": "Email",
+      "passwordFieldLabel": "Password",
+      "passwordConfirmationFieldLabel": "Password Confirmation",
+      "userRoleTabLabel": "User Role",
+      "saveUserButtonLabel": "Save User"
+    },
     "grid": {
       "searchFieldPlaceholder": "Search by keyword",
       "rowSelector": ".data-grid tbody tr",
@@ -337,7 +358,10 @@
       },
       "form": {
         "nameFieldLabel": "Product Name",
-        "saveButtonLabel": "Save"
+        "saveButtonLabel": "Save",
+        "seoSectionLabel": "Search Engine Optimization",
+        "urlKeyFieldLabel": "URL Key",
+        "createRedirectCheckboxLabel": "Create Permanent Redirect for old URL"
       }
     },
     "customers": {
@@ -373,6 +397,8 @@
         "newCustomerButtonLabel": "Create New Customer",
         "accountSectionSelectorComment": "The Account Information section, used as the signal that a customer has been chosen and the order form is open. Deliberately NOT the `#order-data` wrapper that visually encloses it: Magento leaves that wrapper display:none on some builds (the Hyva demo's) while rendering its sections perfectly well, so gating on it passes on one store and hangs forever on the next. This section is hidden before a customer is chosen and visible after it on every build checked, and the flow genuinely needs it - the order's email field lives inside it.",
         "accountSectionSelector": "#order-form_account",
+        "storeViewRadioSelectorComment": "Multi-store only: Magento asks which store the order is for before rendering the form. The radios carry no name attribute, so they are addressed by id prefix.",
+        "storeViewRadioSelector": ".store-scope input[type=\"radio\"][id^=\"store_\"]",
         "addProductsButtonSelector": "#add_products",
         "productSkuFilterSelector": "#sales_order_create_search_grid_filter_sku",
         "productRowSelector": "#sales_order_create_search_grid_table tbody tr",
@@ -444,6 +470,12 @@
     "subscriptionCheckboxSelector": "#subscription",
     "saveButtonLabel": "Save"
   },
+  "cookieRestrictionComment": "Magento_Cookie renders the notice into #notice-cookie-block on every page until the user_allowed_save_cookie cookie is set.",
+  "cookieRestriction": {
+    "noticeSelector": "#notice-cookie-block",
+    "acceptButtonSelector": "#btn-cookie-allow"
+  },
+
   "newsletter": {
     "emailFieldLabel": "Sign Up for Our Newsletter",
     "subscribeButtonLabel": "Subscribe"
