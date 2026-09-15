@@ -39,7 +39,7 @@
     "pagedListingPage": "/women/tops-women.html",
     "parentListingPageComment": "An ANCHOR category that has children, used to prove Magento rolls a child's products up into its parent. Defaults to the same category as pagedListingPage because the stock sample data's `Tops` is both, but they are separate keys: a store whose paged category happens to be a leaf still needs somewhere to point this.",
     "parentListingPage": "/women/tops-women.html",
-    "childOfParentListingPageComment": "A category that is a CHILD of parentListingPage. Its products must all appear in the parent's listing.",
+    "childOfParentListingPageComment": "A category that is a CHILD of parentListingPage. Its products must appear in the parent's listing (the assertion is 'at least one', because the parent's first page holds fewer products than the branch).",
     "childOfParentListingPage": "/women/tops-women/jackets-women.html"
   },
   "guestOrderLookupComment": "Orders and Returns. The only route a guest has to an order they placed without an account.",

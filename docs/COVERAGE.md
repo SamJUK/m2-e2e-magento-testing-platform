@@ -212,6 +212,16 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 | `an order's detail page and its printable copy open from the history` | `@checkout @customer @orders` | ✅ |
 | `the newsletter subscription can be toggled from the account` | `@customer @newsletter` | ✅ |
 
+### Session & CSRF
+
+| Test | Tags | Status |
+|---|---|---|
+| `a password reset link cannot be used twice` | `@customer @password @security @negative` | ✅ |
+| `the session id changes when a customer signs in` | `@customer @security` | ✅ |
+| `a form submitted with an invalid form key is refused` | `@contact @security @negative` | ✅ |
+| `cookie restriction mode behaves as the store declares` | `@security @cookies` | ✅ |
+| a reset link stops working once it has aged out | | ➖ Needs the store's token lifetime changed underneath the run; Magento gives the same message either way, so single use is what is testable |
+
 ## Newsletter & contact
 
 | Test | Tags | Status |
@@ -238,16 +248,6 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 ---
 
 ## Admin
-
-### Session & CSRF
-
-| Test | Tags | Status |
-|---|---|---|
-| `a password reset link cannot be used twice` | `@customer @password @security @negative` | ✅ |
-| `the session id changes when a customer signs in` | `@customer @security` | ✅ |
-| `a form submitted with an invalid form key is refused` | `@contact @security @negative` | ✅ |
-| `cookie restriction mode behaves as the store declares` | `@security @cookies` | ✅ |
-| a reset link stops working once it has aged out | | ➖ Needs the store's token lifetime changed underneath the run; Magento gives the same message either way, so single use is what is testable |
 
 ### Access & system
 

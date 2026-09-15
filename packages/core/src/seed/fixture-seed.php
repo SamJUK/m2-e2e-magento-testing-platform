@@ -580,12 +580,17 @@ $bundle = $productRepository->save($bundle);
 // unpriced for the whole run. Reindexed as a LIST of the rows just written, not
 // as a full reindex: sub-second either way, and it cannot disturb the rest of
 // the catalogue.
-$bundleIds = array_map(static function ($p) { return (int) $p->getId(); }, $parts);
-$bundleIds[] = (int) $bundle->getId();
+// Every product this seed creates, not only the bundle's: a first-run product
+// with no stock-index row renders out of stock under Update by Schedule.
+$seededIds = array_map(static function ($p) { return (int) $p->getId(); }, $parts);
+foreach ([$bundle, $optionedProduct, $oosProduct, $editableProduct, $orderableProduct] as $seeded) {
+    $seededIds[] = (int) $seeded->getId();
+}
+$seededIds = array_values(array_unique(array_filter($seededIds)));
 $indexerRegistry = $om->get(\Magento\Framework\Indexer\IndexerRegistry::class);
 foreach (['cataloginventory_stock', 'catalog_product_price'] as $indexerId) {
     try {
-        $indexerRegistry->get($indexerId)->reindexList($bundleIds);
+        $indexerRegistry->get($indexerId)->reindexList($seededIds);
     } catch (\Throwable $e) {
         printf("[e2e-seed] could not reindex %s: %s\n", $indexerId, $e->getMessage());
     }

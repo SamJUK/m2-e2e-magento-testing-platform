@@ -48,6 +48,10 @@ account, there is just no way to run a review conversation with a queue.
   paragraph describing it.
 - Both themes stay in step. `theme-luma` and `theme-hyva` are a contract, and
   CI fails on drift in test titles or tags.
+- Every assertion is falsifiable by breaking the feature. Turn the feature off
+  or break it, watch the test fail, then put it back. A success message is not
+  proof of an effect: read the effect back. An audit once found 20 of 44 tests
+  passing with the feature disabled, so this is the rule we most need held.
 
 ## Mechanics
 

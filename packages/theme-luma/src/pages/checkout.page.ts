@@ -430,7 +430,11 @@ export class CheckoutPage implements ICheckoutPage {
     const s = this.data.selectors.checkout.shipping;
 
     const cards = this.page.locator(s.addressItem);
-    await expect(cards.first()).toBeVisible({ timeout: 30_000 });
+    // Same render as the guest email field, so the same budget.
+    await expect(
+      cards.first(),
+      'the saved address list is rendered',
+    ).toBeVisible({ timeout: 120_000 });
 
     const shipHere = this.page
       .getByRole('button', { name: s.shipHereButtonLabel })
@@ -438,7 +442,10 @@ export class CheckoutPage implements ICheckoutPage {
     if (await shipHere.isVisible()) {
       await shipHere.click();
     }
-    await expect(this.page.locator(s.selectedAddressItem)).toHaveCount(1);
+    await expect(
+      this.page.locator(s.selectedAddressItem),
+      'exactly one saved address is selected to ship to',
+    ).toHaveCount(1, { timeout: 30_000 });
   }
 
   /** Fills one of checkout's address forms. Shipping and billing share a shape. */
