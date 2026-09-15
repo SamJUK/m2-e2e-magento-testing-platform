@@ -253,3 +253,107 @@ test.describe('Category Listing Controls', () => {
     },
   );
 });
+
+test.describe('Category listing integrity', () => {
+  test(
+    "a layered navigation filter's count matches the number of results",
+    { tag: ['@category', '@filter'] },
+    async ({ categoryPage, page, data }) => {
+      // Reading the facet, applying it and reading the toolbar back is two
+      // listing round-trips on a dev-mode store.
+      test.slow();
+
+      await page.goto(data.slugs.categories.listingPage);
+      const { filterName, filterValue } = data.fixtures.category.listingPage.layeredNavigation;
+
+      const advertised = await categoryPage.getFilterOptionCount(filterName, filterValue);
+      expect(advertised, 'the facet advertises a non-zero count').toBeGreaterThan(0);
+
+      await categoryPage.selectFilter(filterName, filterValue);
+      await categoryPage.expectFilterIsApplied(filterName, filterValue);
+
+      // Compared against the toolbar total rather than the tiles on screen, so
+      // this measures the result SET and not whichever page of it is rendered.
+      // A facet promising 12 and returning 9 is a stale catalog index, and
+      // nothing else in the suite would notice.
+      expect(
+        await categoryPage.getResultCount(),
+        `"${filterValue}" returns the ${advertised} results it advertised`,
+      ).toBe(advertised);
+    },
+  );
+
+  test(
+    'the chosen sort order survives paging',
+    { tag: ['@category', '@sort', '@pagination'] },
+    async ({ categoryPage, page, data }) => {
+      // Sort, page, then read the listing back.
+      test.slow();
+
+      await page.goto(data.slugs.categories.pagedListingPage, {
+        waitUntil: 'domcontentloaded',
+      });
+
+      const sortOrder = data.inputs.category.listingPage.sortOrderByName;
+      await categoryPage.changeSortOrder(sortOrder);
+      const firstPage = await categoryPage.getProductNames(2);
+
+      await categoryPage.goToPage(2);
+
+      // Two independent reads. The control still SAYS the sort is applied, and
+      // the listing still IS sorted. A pager that drops product_list_order
+      // silently reverts to position order, which looks like a plausible
+      // listing rather than like a bug.
+      expect(
+        await categoryPage.getSelectedSortOrder(),
+        'the sorter still shows the chosen order on page two',
+      ).toBe(sortOrder);
+
+      const secondPage = await categoryPage.getProductNames(2);
+      const alphabetically = [...secondPage].sort((a, b) =>
+        a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0,
+      );
+      expect(secondPage, 'page two is still in alphabetical order').toEqual(alphabetically);
+
+      // And it is genuinely the next page of the same sorted set, not page one
+      // served again under a different URL.
+      expect(
+        secondPage.filter((name) => firstPage.includes(name)),
+        'page two shares no product with page one',
+      ).toEqual([]);
+    },
+  );
+
+  test(
+    "an anchor category includes its child categories' products",
+    { tag: ['@category', '@anchor'] },
+    async ({ categoryPage, page, data }) => {
+      // Two full listings, one of them re-rendered at the largest page size.
+      test.slow();
+
+      await page.goto(data.slugs.categories.childOfParentListingPage, {
+        waitUntil: 'domcontentloaded',
+      });
+      const childProducts = await categoryPage.getProductNames(1);
+      expect(childProducts.length, 'the child category lists products').toBeGreaterThan(0);
+
+      await page.goto(data.slugs.categories.parentListingPage, {
+        waitUntil: 'domcontentloaded',
+      });
+      // The whole parent listing at once: with the default page size a child's
+      // products can legitimately sit on page two, and this would fail for a
+      // reason that has nothing to do with anchoring.
+      await categoryPage.changeResultsPerPage(
+        data.inputs.category.listingPage.maxResultsPerPage,
+      );
+      const parentProducts = await categoryPage.getProductNames(1);
+
+      // Anchor is off, or the index is stale, and a whole branch of the
+      // catalogue silently stops being browsable from the top.
+      expect(
+        childProducts.filter((name) => parentProducts.includes(name)).length,
+        "the parent listing carries the child category's products",
+      ).toBeGreaterThan(0);
+    },
+  );
+});

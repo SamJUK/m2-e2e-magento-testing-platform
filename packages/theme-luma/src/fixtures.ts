@@ -14,6 +14,7 @@ import { SearchPage } from './pages/search.page';
 import { WishlistPage } from './pages/wishlist.page';
 import { ComparePage } from './pages/compare.page';
 import { ReviewPage } from './pages/review.page';
+import { CookieNoticePage } from './pages/cookie-notice.page';
 import { AdminLoginPage } from './pages/admin/login.page';
 import { AdminConfigPage } from './pages/admin/config.page';
 import { AdminCMSBlockPage } from './pages/admin/cms-block.page';
@@ -24,6 +25,7 @@ import { AdminProductPage } from './pages/admin/catalog.page';
 import { AdminCustomerPage } from './pages/admin/customer.page';
 import { AdminCachePage } from './pages/admin/cache.page';
 import { AdminReviewPage } from './pages/admin/review.page';
+import { AdminPermissionsPage } from './pages/admin/permissions.page';
 
 export { expect };
 
@@ -42,6 +44,7 @@ export interface LumaFixtures {
   wishlistPage: WishlistPage;
   comparePage: ComparePage;
   reviewPage: ReviewPage;
+  cookieNoticePage: CookieNoticePage;
   adminLoginPage: AdminLoginPage;
   adminConfigPage: AdminConfigPage;
   adminCMSBlockPage: AdminCMSBlockPage;
@@ -52,6 +55,7 @@ export interface LumaFixtures {
   adminCustomerPage: AdminCustomerPage;
   adminCachePage: AdminCachePage;
   adminReviewPage: AdminReviewPage;
+  adminPermissionsPage: AdminPermissionsPage;
 }
 
 /**
@@ -131,6 +135,10 @@ export const lumaTest = coreTest.extend<LumaFixtures>({
     await use(new ReviewPage(page, data));
   },
 
+  cookieNoticePage: async ({ page, data }, use) => {
+    await use(new CookieNoticePage(page, data));
+  },
+
   adminLoginPage: async ({ page, data }, use) => {
     const adminSlug = process.env.PLAYWRIGHT_ADMIN_SLUG ?? '/backend';
     await use(new AdminLoginPage(page, data, adminSlug));
@@ -179,6 +187,11 @@ export const lumaTest = coreTest.extend<LumaFixtures>({
   adminReviewPage: async ({ page, data }, use) => {
     const adminSlug = process.env.PLAYWRIGHT_ADMIN_SLUG ?? '/backend';
     await use(new AdminReviewPage(page, data, adminSlug));
+  },
+
+  adminPermissionsPage: async ({ page, data }, use) => {
+    const adminSlug = process.env.PLAYWRIGHT_ADMIN_SLUG ?? '/backend';
+    await use(new AdminPermissionsPage(page, data, adminSlug));
   },
 });
 

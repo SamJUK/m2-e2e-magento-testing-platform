@@ -17,12 +17,14 @@ import { SearchPage } from './pages/search.page';
 import { WishlistPage } from './pages/wishlist.page';
 import { ComparePage } from './pages/compare.page';
 import { ReviewPage } from './pages/review.page';
+import { CookieNoticePage } from './pages/cookie-notice.page';
 import { AdminLoginPage } from './pages/admin/login.page';
 import { AdminOrderPage } from './pages/admin/order.page';
 import { AdminProductPage } from './pages/admin/catalog.page';
 import { AdminCustomerPage } from './pages/admin/customer.page';
 import { AdminCachePage } from './pages/admin/cache.page';
 import { AdminReviewPage } from './pages/admin/review.page';
+import { AdminPermissionsPage } from './pages/admin/permissions.page';
 import { AdminConfigPage } from './pages/admin/config.page';
 import { AdminCMSBlockPage } from './pages/admin/cms-block.page';
 import { AdminCMSPagePage } from './pages/admin/cms-page.page';
@@ -50,6 +52,7 @@ export interface HyvaFixtures {
   wishlistPage: WishlistPage;
   comparePage: ComparePage;
   reviewPage: ReviewPage;
+  cookieNoticePage: CookieNoticePage;
   adminLoginPage: AdminLoginPage;
   adminOrderPage: AdminOrderPage;
   adminProductPage: AdminProductPage;
@@ -60,6 +63,7 @@ export interface HyvaFixtures {
   adminCMSPagePage: AdminCMSPagePage;
   adminCartPriceRulePage: AdminCartPriceRulePage;
   adminReviewPage: AdminReviewPage;
+  adminPermissionsPage: AdminPermissionsPage;
 }
 
 /**
@@ -145,6 +149,10 @@ export const hyvaTest = coreTest.extend<HyvaFixtures>({
     await use(new ReviewPage(page, data));
   },
 
+  cookieNoticePage: async ({ page, data }, use) => {
+    await use(new CookieNoticePage(page, data));
+  },
+
   adminLoginPage: async ({ page, data }, use) => {
     const adminSlug = process.env.PLAYWRIGHT_ADMIN_SLUG ?? '/backend';
     await use(new AdminLoginPage(page, data, adminSlug));
@@ -193,6 +201,11 @@ export const hyvaTest = coreTest.extend<HyvaFixtures>({
   adminReviewPage: async ({ page, data }, use) => {
     const adminSlug = process.env.PLAYWRIGHT_ADMIN_SLUG ?? '/backend';
     await use(new AdminReviewPage(page, data, adminSlug));
+  },
+
+  adminPermissionsPage: async ({ page, data }, use) => {
+    const adminSlug = process.env.PLAYWRIGHT_ADMIN_SLUG ?? '/backend';
+    await use(new AdminPermissionsPage(page, data, adminSlug));
   },
 });
 
