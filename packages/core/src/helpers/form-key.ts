@@ -29,62 +29,58 @@ import type { BrowserContext, Page } from '@playwright/test';
 /**
  * Whether this store mints a form-key cookie, remembered per browser context.
  *
- * Without this the no-cookie grace is paid on EVERY call, and a store with the
- * full page cache off never mints one: ~60 call sites across the page objects,
- * two back to back in a single sign-in helper. Both stock demo stores run with
- * full_page off, so the tax was being paid for real.
+ * A store with the full page cache off never mints one, and both stock demo
+ * stores run that way, so without this the grace is paid on every call - five
+ * in one address flow, two in a single sign-in helper.
+ *
+ * Contexts are per test (the default `page` fixture), so the verdict is too:
+ * the first call in a test still pays the grace, and the saving is on the ones
+ * after it.
  */
 type FormKeyProvider = 'provider' | 'absent';
 const providerByContext = new WeakMap<BrowserContext, FormKeyProvider>();
 
-export async function waitForFormKey(page: Page): Promise<void> {
-  const context = page.context();
+const FIRST_PROBE_GRACE_MS = 10_000;
 
-  if (providerByContext.get(context) === 'absent') {
-    await page.waitForFunction(
-      () => {
-        const inputs = document.querySelectorAll<HTMLInputElement>('input[name="form_key"]');
-        return inputs.length === 0 || Array.from(inputs).every((input) => input.value !== '');
-      },
-      undefined,
-      { timeout: 15_000 },
-    );
-    return;
+/** Resolves to the branch that settled, so the caller can cache the verdict. */
+function formKeyState(graceMs: number): FormKeyProvider | false {
+  const scope = window as unknown as { __e2eFormKeyDeadline?: number };
+  if (scope.__e2eFormKeyDeadline === undefined) {
+    scope.__e2eFormKeyDeadline = Date.now() + graceMs;
   }
 
-  const graceMs = 10_000;
+  const inputs = document.querySelectorAll<HTMLInputElement>('input[name="form_key"]');
+  const match = document.cookie.match(/(?:^|;\s*)form_key=([^;]+)/);
 
-  // The deadline is computed inside the page, not passed in: a Node timestamp
-  // compared against a page clock skews under a remote browser.
-  const outcome = await page.waitForFunction(
-    (grace) => {
-      const scope = window as unknown as { __e2eFormKeyDeadline?: number };
-      if (scope.__e2eFormKeyDeadline === undefined) {
-        scope.__e2eFormKeyDeadline = Date.now() + grace;
-      }
+  if (match) {
+    const cookieKey = decodeURIComponent(match[1]);
+    // JS-built forms read the cookie directly, so no inputs is fine.
+    if (inputs.length === 0) return 'provider';
+    return Array.from(inputs).every((input) => input.value === cookieKey) ? 'provider' : false;
+  }
 
-      const inputs = document.querySelectorAll<HTMLInputElement>('input[name="form_key"]');
-      const match = document.cookie.match(/(?:^|;\s*)form_key=([^;]+)/);
+  if (Date.now() < scope.__e2eFormKeyDeadline) return false;
+  // No provider: the page was rendered for this session, so its own inputs
+  // carry the right key. No inputs at all is settled too.
+  if (inputs.length === 0) return 'absent';
+  return Array.from(inputs).every((input) => input.value !== '') ? 'absent' : false;
+}
 
-      if (match) {
-        const cookieKey = decodeURIComponent(match[1]);
-        // JS-built forms read the cookie directly, so no inputs is fine.
-        if (inputs.length === 0) return 'provider';
-        return Array.from(inputs).every((input) => input.value === cookieKey) ? 'provider' : false;
-      }
+export async function waitForFormKey(page: Page): Promise<void> {
+  const context = page.context();
+  // Zero grace on the fast path, but the cookie is still honoured if one turns
+  // up: a verdict cached from one slow probe must not make every later call
+  // accept a stale key for the rest of the context.
+  const graceMs = providerByContext.get(context) === 'absent' ? 0 : FIRST_PROBE_GRACE_MS;
 
-      if (Date.now() < scope.__e2eFormKeyDeadline) return false;
-      // No provider on this store: the page was rendered for this session, so
-      // its own inputs are the right key. No inputs at all is also settled -
-      // demanding some is what used to hang a JS-only page for the full wait.
-      if (inputs.length === 0) return 'absent';
-      return Array.from(inputs).every((input) => input.value !== '') ? 'absent' : false;
-    },
-    graceMs,
-    { timeout: graceMs + 20_000 },
-  );
-
-  providerByContext.set(context, (await outcome.jsonValue()) as FormKeyProvider);
+  const outcome = await page.waitForFunction(formKeyState, graceMs, {
+    timeout: graceMs + 20_000,
+  });
+  try {
+    providerByContext.set(context, (await outcome.jsonValue()) as FormKeyProvider);
+  } finally {
+    await outcome.dispose();
+  }
 }
 
 /**

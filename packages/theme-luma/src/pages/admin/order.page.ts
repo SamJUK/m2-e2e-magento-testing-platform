@@ -251,7 +251,7 @@ export class AdminOrderPage implements IAdminOrderPage {
       // do the work is what the admin itself does.
       const productCheckbox = productRow.locator(s.productCheckboxSelector);
       if (!(await productCheckbox.isChecked())) {
-        await productRow.click();
+        await productRow.click({ timeout: 15_000 });
       }
       await expect(
         productCheckbox,

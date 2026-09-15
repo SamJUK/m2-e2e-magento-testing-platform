@@ -16,7 +16,7 @@
     "cookieRestrictionComment": "Store runs with Cookie Restriction Mode on (Stores > Configuration > General > Web > Default Cookie Settings). true: the suite requires the notice to render on a first visit and requires accepting it to persist across a reload. false: it asserts no such notice is rendered, so a store that later switches it on fails here rather than having every subsequent test silently fight an overlay it does not know about. Magento's own default is off.",
     "cookieRestriction": false,
 
-    "customerLockoutComment": "Store locks a customer account after repeated failed sign-ins (Stores > Configuration > Customers > Customer Configuration > Password Options > Maximum Login Failures to Lockout Account). true: the suite requires the CORRECT password to be refused once the threshold in inputs.account.login.lockoutFailures is passed. false: it requires the correct password to still work, so a store that later turns lockout on fails here rather than having its sign-in tests start flaking for no visible reason. Magento's own default is on, at 6 failures.",
+    "customerLockoutComment": "Store locks a customer account after repeated failed sign-ins (Stores > Configuration > Customers > Customer Configuration > Password Options > Maximum Login Failures to Lockout Account). true: the suite requires the CORRECT password to be refused once the threshold in inputs.account.login.lockoutFailures is passed. false: it requires the correct password to still work, so a store that later turns lockout on fails here rather than having its sign-in tests start flaking for no visible reason. Magento's own default is on, at 10 failures for customers (6 is the admin threshold, a different setting).",
     "customerLockout": true
   },
 

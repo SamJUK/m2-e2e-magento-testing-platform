@@ -340,8 +340,32 @@ $staleRoleIds = array_filter(array_map('intval', $connection->fetchCol(
 $deletedUsers = 0;
 $deletedRoles = 0;
 
+
+// Leave alone any role a non-suite admin holds. The role name is only a
+// prefix, so a store of its own could carry one, and stripping its links would
+// stand a real admin down to no role at all.
 if ($staleRoleIds) {
-    $connection->delete($ruleTable, ['role_id IN (?)' => $staleRoleIds]);
+    $held = $connection->fetchAll(
+        $connection->select()
+            ->from($roleTable, ['parent_id', 'user_id'])
+            ->where('parent_id IN (?)', $staleRoleIds)
+            ->where('user_type = ?', 2)
+    );
+    $foreign = [];
+    foreach ($held as $row) {
+        if (!in_array((int) $row['user_id'], $staleUserIds, true)) {
+            // parent_id, not role_id: the link row has an id of its own, and
+            // keying on it excluded nothing while reporting that it had.
+            $foreign[(int) $row['parent_id']] = true;
+        }
+    }
+    if ($foreign) {
+        printf(
+            "[e2e-seed] leaving %d E2E-named role(s) alone: held by admin(s) this suite did not create\n",
+            count($foreign)
+        );
+        $staleRoleIds = array_values(array_diff($staleRoleIds, array_keys($foreign)));
+    }
 }
 
 // User rows before their groups, or Acl\Builder throws on every admin request
@@ -353,6 +377,9 @@ if ($staleRoleIds) {
 }
 if ($staleUserIds) {
     $linkConditions[] = $connection->quoteInto('(user_type = 2 AND user_id IN (?))', $staleUserIds);
+}
+if ($staleRoleIds) {
+    $connection->delete($ruleTable, ['role_id IN (?)' => $staleRoleIds]);
 }
 if ($linkConditions) {
     $deletedRoles += $connection->delete($roleTable, implode(' OR ', $linkConditions));

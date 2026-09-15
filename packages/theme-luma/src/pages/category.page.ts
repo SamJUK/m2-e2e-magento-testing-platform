@@ -53,9 +53,13 @@ export class CategoryPage implements ICategoryPage {
     // The sorter's change handler binds after the markup, so a selection made
     // too early fires into nothing. Retried as one unit.
     await expect(async () => {
-      // A previous attempt's navigation may have landed late; selecting again
-      // would queue a second one and return with it still in flight.
-      if (this.page.url() !== before) return;
+      // A previous attempt's navigation may have landed late. Returning from a
+      // toPass callback counts as SUCCESS, so the load has to be waited for
+      // here or the caller reads a document still being parsed.
+      if (this.page.url() !== before) {
+        await this.page.waitForLoadState('domcontentloaded');
+        return;
+      }
       await this.sorterDropdown.selectOption(
         order ?? this.data.inputs.category.listingPage.sortOrder,
         { timeout: 15_000 },
@@ -103,7 +107,11 @@ export class CategoryPage implements ICategoryPage {
     // swallowed click — which is what re-clicked a filter link on a loaded CI
     // runner and applied a second filter instead of retrying the first.
     await expect(async () => {
-      if (this.page.url() !== before) return;
+      // Returning here counts as success, so wait the navigation out.
+      if (this.page.url() !== before) {
+        await this.page.waitForLoadState('domcontentloaded');
+        return;
+      }
       if (!(await option.isVisible().catch(() => false))) {
         await filterItem.locator('.filter-options-title').click({ force: true });
       }
