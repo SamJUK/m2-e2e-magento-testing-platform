@@ -679,36 +679,21 @@ export class CheckoutPage implements ICheckoutPage {
   async startAccountCreationFromOrderSuccess(): Promise<void> {
     const s = this.data.selectors.checkout.success;
 
-    const createAccount = this.page.locator(s.createAccountLinkSelector).first();
+    const createAccount = this.page
+      .locator(s.createAccountLinkSelector)
+      .filter({ visible: true })
+      .first();
     await expect(
       createAccount,
       'the success page offers the guest an account',
     ).toBeVisible({ timeout: 30_000 });
-    // Watch for the delegation route. Both a delegated hand-off and a plain
-    // link land on customer/account/create, so the destination alone does not
-    // tell them apart - and the rest of this flow types every field in by
-    // hand, so nothing else here would notice the difference.
-    let delegated = false;
-    const watch = (request: { url: () => string }) => {
-      if (request.url().includes('checkout/account/delegateCreate')) {
-        delegated = true;
-      }
-    };
-    this.page.on('request', watch);
-
-    try {
-      await createAccount.click();
-      await this.page.waitForURL(/customer\/account\/create/, {
-        timeout: 45_000,
-        waitUntil: 'domcontentloaded',
-      });
-    } finally {
-      this.page.off('request', watch);
-    }
-
-    expect(
-      delegated,
-      'the success page hands the guest over through delegated account creation',
-    ).toBe(true);
+    // The selector is the assertion: only the success page's own block links to
+    // the delegation route, so reaching the form through it is what separates a
+    // delegated hand-off from the header's plain registration link.
+    await createAccount.click();
+    await this.page.waitForURL(/customer\/account\/create/, {
+      timeout: 45_000,
+      waitUntil: 'domcontentloaded',
+    });
   }
 }

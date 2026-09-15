@@ -52,14 +52,17 @@ export class CategoryPage implements ICategoryPage {
     const before = this.page.url();
     // The sorter's change handler binds after the markup, so a selection made
     // too early fires into nothing. Retried as one unit.
+    let attempted = false;
     await expect(async () => {
-      // A previous attempt's navigation may have landed late. Returning from a
-      // toPass callback counts as SUCCESS, so the load has to be waited for
-      // here or the caller reads a document still being parsed.
-      if (this.page.url() !== before) {
+      // Only once an attempt has actually been made: on the first pass this
+      // guard would otherwise exit before selectOption ran, and returning from
+      // a toPass callback counts as SUCCESS - reporting a sort that was never
+      // applied. The load still has to be waited out when it does fire.
+      if (attempted && this.page.url() !== before) {
         await this.page.waitForLoadState('domcontentloaded');
         return;
       }
+      attempted = true;
       await this.sorterDropdown.selectOption(
         order ?? this.data.inputs.category.listingPage.sortOrder,
         { timeout: 15_000 },

@@ -30,6 +30,11 @@ export async function dumpDatabase(config: ProjectConfig): Promise<void> {
     console.log(
       `[e2e-core] E2E_REUSE_DB_DUMP=1 and ${dumpPath} exists — reusing existing dump (skipping re-dump).`,
     );
+    // Checked here too. A reused file becomes this run's restore point without
+    // anything having written it, so a dump left truncated by a full disk or an
+    // aborted s3 download would be imported as a no-op at teardown and the
+    // run's writes would become permanent.
+    assertDumpLooksComplete(dumpPath);
     return;
   }
 

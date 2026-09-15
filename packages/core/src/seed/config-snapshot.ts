@@ -23,9 +23,20 @@ import type { ProjectConfig } from '../config/schema';
  * continues to win exactly as it did before.
  */
 
-/** Where the snapshot lives between the seed and the teardown. */
-function snapshotPath(): string {
-  return path.join(process.cwd(), 'var', 'e2e-config-snapshot.json');
+/**
+ * Where the snapshot lives between the seed and the teardown.
+ *
+ * Derived from `db.dumpPath` where the project sets one, so it sits beside the
+ * dump and follows the project rather than the directory the run was launched
+ * from. On process.cwd() alone, running from the Magento root instead of the
+ * e2e directory hid the pending snapshot and the next run recorded the relaxed
+ * values as the originals; retargeting one e2e directory at another store
+ * applied the first store's config to the second.
+ */
+function snapshotPath(config?: ProjectConfig): string {
+  const dumpPath = config?.db?.dumpPath;
+  const base = dumpPath ? path.dirname(dumpPath) : path.join(process.cwd(), 'var');
+  return path.join(base, 'e2e-config-snapshot.json');
 }
 
 interface ConfigSnapshot {
@@ -89,7 +100,7 @@ export async function takeConfigSnapshot(
     values[configPath] = configPath in existing ? existing[configPath] : null;
   }
 
-  const file = snapshotPath();
+  const file = snapshotPath(config);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(
     file,
@@ -106,7 +117,7 @@ export async function takeConfigSnapshot(
  * retried by the next run rather than being forgotten.
  */
 export async function restoreConfigSnapshot(config: ProjectConfig): Promise<boolean> {
-  const file = snapshotPath();
+  const file = snapshotPath(config);
   if (!fs.existsSync(file) || !config.shell?.dbQuery) return false;
 
   let snapshot: ConfigSnapshot;
@@ -154,6 +165,6 @@ export async function restoreConfigSnapshot(config: ProjectConfig): Promise<bool
 }
 
 /** Whether a previous run left config unreverted. */
-export function hasPendingConfigSnapshot(): boolean {
-  return fs.existsSync(snapshotPath());
+export function hasPendingConfigSnapshot(config?: ProjectConfig): boolean {
+  return fs.existsSync(snapshotPath(config));
 }

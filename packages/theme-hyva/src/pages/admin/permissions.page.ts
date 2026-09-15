@@ -96,10 +96,14 @@ export class AdminPermissionsPage {
     // saves a user with no role at all, and a roleless user is refused every
     // page exactly as an empty role is - so without this the spec's premise is
     // never established.
-    expect(
-      await roleRadio.isChecked(),
-      `the ${roleName} role is still selected when the user is saved`,
-    ).toBe(true);
+    // Only that the form carries the role when it is submitted. Magento saves a
+    // user with no role without complaint, and a roleless admin is refused
+    // every page exactly as an empty role is, so the spec cannot tell them
+    // apart - a read-back off the saved user would, and is not written yet.
+    await expect(
+      roleRadio,
+      `the ${roleName} role is selected before the user is saved`,
+    ).toBeChecked({ timeout: 15_000 });
 
     await this.page.getByRole('button', { name: s.saveUserButtonLabel }).click();
     await this.expectAdminSaved(
@@ -107,6 +111,7 @@ export class AdminPermissionsPage {
       'the admin reports the user was saved',
     );
   }
+
 
   /**
    * Asserts the signed-in admin is refused a page their role has no resource

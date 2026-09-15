@@ -9,6 +9,19 @@ import type { ProjectShellHooks } from '../config/schema';
  * bare metal) declare the hooks themselves — see ProjectShellHooks.
  */
 
+/**
+ * Argument list for an error message, with anything password-shaped removed.
+ *
+ * dockerComposeShell passes `-p<password>` to mysql, and a rejected command's
+ * message reaches the console, the HTML report and CI logs.
+ */
+function redactArgs(args: string[]): string {
+  return args
+    .map((arg) => arg.replace(/^(-p|--password=)(.+)$/, '$1***'))
+    .map((arg) => (arg.length > 60 ? `${arg.slice(0, 60)}…` : arg))
+    .join(' ');
+}
+
 function run(
   command: string,
   args: string[],
@@ -55,6 +68,10 @@ function run(
         out.on('finish', () => res());
         out.on('error', rej);
       });
+      // Claimed immediately: the stream can fail before the child exits (a
+      // disk filling mid-dump), and the handler below is only attached on
+      // 'close', so the rejection would land with nothing listening.
+      flushed.catch(() => {});
       child.stdout!.pipe(out);
     } else if (opts.captureStdout) {
       child.stdout!.on('data', (chunk: Buffer) => {
@@ -65,7 +82,7 @@ function run(
     child.on('error', reject);
     child.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`${command} ${args.join(' ')} exited with code ${code}`));
+        reject(new Error(`${command} exited with code ${code} (${redactArgs(args)})`));
         return;
       }
       if (!flushed) {

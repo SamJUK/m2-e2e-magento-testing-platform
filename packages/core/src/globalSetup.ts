@@ -48,11 +48,26 @@ export async function runGlobalSetup(config: ProjectConfig): Promise<void> {
   // — Ctrl-C, a cancelled CI job, a crash — and left the store relaxed. Put it
   // back before taking a fresh snapshot, or this run would record the MODIFIED
   // values as the originals and make the change permanent.
-  if (usesConfigSnapshot(config) && hasPendingConfigSnapshot()) {
+  if (usesConfigSnapshot(config) && hasPendingConfigSnapshot(config)) {
     console.warn(
       '[e2e-core] A previous run did not restore its config changes. Reverting them now.',
     );
+    // Refuses rather than carries on. Seeding over a snapshot that could not be
+    // read would record the RELAXED values as this store's originals, and
+    // teardown would then "restore" captcha and form-key protection to off,
+    // permanently and with a success message.
+    // Still on disk is the failure signal: an EMPTY snapshot also returns
+    // false, and removes itself, which is nothing to worry about.
     await restoreConfigSnapshot(config);
+    if (hasPendingConfigSnapshot(config)) {
+      throw new Error(
+        `[e2e-core] REFUSING TO RUN: a previous run left config changes behind and they ` +
+          `could not be reverted. Seeding now would record this store's relaxed settings ` +
+          `as its originals and make them permanent.\n` +
+          `The snapshot is the only record of the original values - inspect it, apply it by ` +
+          `hand if it is readable, and delete it once the store is back to normal.`,
+      );
+    }
   }
 
   await runSeed(config);

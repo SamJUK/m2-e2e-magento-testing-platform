@@ -41,14 +41,19 @@ type FormKeyProvider = 'provider' | 'absent';
 const providerByContext = new WeakMap<BrowserContext, FormKeyProvider>();
 
 const FIRST_PROBE_GRACE_MS = 10_000;
+// Short, but not zero: see the note in waitForFormKey.
+const CACHED_ABSENT_GRACE_MS = 1_000;
 
-/** Resolves to the branch that settled, so the caller can cache the verdict. */
-function formKeyState(graceMs: number): FormKeyProvider | false {
-  const scope = window as unknown as { __e2eFormKeyDeadline?: number };
-  if (scope.__e2eFormKeyDeadline === undefined) {
-    scope.__e2eFormKeyDeadline = Date.now() + graceMs;
-  }
-
+/**
+ * Resolves to the branch that settled, so the caller can cache the verdict.
+ *
+ * The deadline is computed by the caller and passed in, per call. Storing it on
+ * the document meant the first call armed it for every later one: once elapsed,
+ * a subsequent call inherited an expired deadline, skipped the wait entirely and
+ * accepted whatever the inputs held - including a cache warmer's stale key
+ * straight after resetFormKey().
+ */
+function formKeyState(deadline: number): FormKeyProvider | false {
   const inputs = document.querySelectorAll<HTMLInputElement>('input[name="form_key"]');
   const match = document.cookie.match(/(?:^|;\s*)form_key=([^;]+)/);
 
@@ -59,7 +64,7 @@ function formKeyState(graceMs: number): FormKeyProvider | false {
     return Array.from(inputs).every((input) => input.value === cookieKey) ? 'provider' : false;
   }
 
-  if (Date.now() < scope.__e2eFormKeyDeadline) return false;
+  if (Date.now() < deadline) return false;
   // No provider: the page was rendered for this session, so its own inputs
   // carry the right key. No inputs at all is settled too.
   if (inputs.length === 0) return 'absent';
@@ -71,9 +76,13 @@ export async function waitForFormKey(page: Page): Promise<void> {
   // Zero grace on the fast path, but the cookie is still honoured if one turns
   // up: a verdict cached from one slow probe must not make every later call
   // accept a stale key for the rest of the context.
-  const graceMs = providerByContext.get(context) === 'absent' ? 0 : FIRST_PROBE_GRACE_MS;
+  // A cached 'absent' shortens the wait but never removes it: the cookie has to
+  // be given a chance to appear, or a verdict recorded from one slow probe lets
+  // the rest of the context accept a stale key.
+  const graceMs =
+    providerByContext.get(context) === 'absent' ? CACHED_ABSENT_GRACE_MS : FIRST_PROBE_GRACE_MS;
 
-  const outcome = await page.waitForFunction(formKeyState, graceMs, {
+  const outcome = await page.waitForFunction(formKeyState, Date.now() + graceMs, {
     timeout: graceMs + 20_000,
   });
   try {

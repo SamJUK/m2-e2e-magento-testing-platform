@@ -32,7 +32,21 @@ export async function runGlobalTeardown(config: ProjectConfig): Promise<void> {
         'run and importing it would roll the store back to that point.',
     );
   } else if (strategy === 'dump-restore') {
-    const restored = await restoreDatabase(config);
+    let restored: boolean;
+    try {
+      restored = await restoreDatabase(config);
+    } catch (error) {
+      // A throw means the import started and stopped part way, so the store is
+      // now neither this run's state nor the dump's. Say so and leave both
+      // markers standing: the next run must refuse rather than treat a
+      // half-restored store as a clean restore point.
+      console.error(
+        '[e2e-core] The database restore FAILED PART WAY THROUGH. The store is in a ' +
+          'mixed state and the dirty-run marker has been left in place, so the next ' +
+          'run will refuse to start. Recover by importing the dump by hand.',
+      );
+      throw error;
+    }
 
     // Only clear the flag when a restore actually happened. restoreDatabase
     // returns false rather than throwing when there is no dbImport hook or the
