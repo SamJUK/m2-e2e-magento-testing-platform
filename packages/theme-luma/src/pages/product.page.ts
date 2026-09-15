@@ -327,6 +327,18 @@ export class ProductPage implements IProductPage {
     }
 
     expect(requested, 'nothing was added to the cart').toBe(false);
+
+    // `requested` is a negative read taken moments after the click, and the
+    // native-validity checks are true from page load. The cart is the only
+    // positive proof. Scoped to this product, because the session may already
+    // hold a basket.
+    await this.page.goto(this.data.slugs.cart);
+    await expect(
+      this.page
+        .locator(this.data.selectors.cart.cartItemSelector)
+        .filter({ hasText: this.data.fixtures.product.customOptions.title }),
+      'the blocked product did not reach the cart',
+    ).toHaveCount(0, { timeout: 30_000 });
   }
 }
 

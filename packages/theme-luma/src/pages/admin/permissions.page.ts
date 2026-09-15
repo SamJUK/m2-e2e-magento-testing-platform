@@ -90,9 +90,16 @@ export class AdminPermissionsPage {
     });
     const roleRadio = roleRow.locator('input[type="radio"]');
     await roleRadio.check();
-    // Magento saves a user with no role at all without complaining, and a
-    // roleless user is refused every page exactly as an empty role is.
-    await expect(roleRadio, `the ${roleName} role is selected`).toBeChecked({ timeout: 15_000 });
+
+    // Read at save time, and not through expect(): check() already verifies the
+    // state it set, and a polling matcher would pass on its first look. Magento
+    // saves a user with no role at all, and a roleless user is refused every
+    // page exactly as an empty role is - so without this the spec's premise is
+    // never established.
+    expect(
+      await roleRadio.isChecked(),
+      `the ${roleName} role is still selected when the user is saved`,
+    ).toBe(true);
 
     await this.page.getByRole('button', { name: s.saveUserButtonLabel }).click();
     await this.expectAdminSaved(

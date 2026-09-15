@@ -22,14 +22,12 @@ import { usesConfigSnapshot } from './seed/magento';
 export async function runGlobalSetup(config: ProjectConfig): Promise<void> {
   console.log('[e2e-core] Global setup starting...');
 
-  // Before anything writes to the store: a dead search engine does not stop the
-  // storefront serving, it just makes every category and search test fail as a
-  // selector timeout. Checked first so the run ends with the cause rather than
-  // ten minutes later with the symptom.
-  // Free and instant, so ahead of the network check: a misconfigured
-  // strategy should not hide behind a search-engine timeout.
+  // Free and instant, so ahead of the network check below.
   assertStrategyHooksConfigured(config);
 
+  // A dead search engine does not stop the storefront serving, it just makes
+  // every category and search test fail as a selector timeout. Checked before
+  // anything writes, so the run ends with the cause not the symptom.
   await assertSearchEngineReachable(config);
 
   const strategy = config.db?.strategy ?? 'none';

@@ -187,7 +187,9 @@ export class AdminProductPage {
       expect(
         response.headers()['location'] ?? '',
         'the redirect points at the new URL key',
-      ).toContain(newUrlKey);
+        // Anchored: the restore target is a prefix of every key this test
+        // generates, so a bare substring match cannot fail.
+      ).toContain(`/${newUrlKey}.html`);
     }).toPass({ timeout: 60_000 });
   }
 }

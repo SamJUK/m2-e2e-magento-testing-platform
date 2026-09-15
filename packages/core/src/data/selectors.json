@@ -280,6 +280,8 @@
     "success": {
       "block": ".checkout-success",
       "createAccountButtonLabelComment": "Magento offers a guest whose email has no account a one-click registration from the success page. Both stock themes render it from Magento_Checkout's registration block.",
+        "createAccountLinkSelectorComment": "The success page's own account-creation control, addressed by the delegation route in its href. Both themes render an anchor to checkout/account/delegateCreate, but neither wraps it in anything stably identifiable - and a page-wide label lookup finds the header's Create an Account link instead, reaching the same form with no delegation.",
+        "createAccountLinkSelector": "a[href*=\"checkout/account/delegateCreate\"]",
       "createAccountButtonLabel": "Create an Account"
     }
   },

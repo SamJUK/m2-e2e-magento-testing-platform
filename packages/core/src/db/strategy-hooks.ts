@@ -19,7 +19,11 @@ const REQUIRED_HOOKS: Record<DbStrategy, readonly string[]> = {
  */
 export function assertStrategyHooksConfigured(config: ProjectConfig): void {
   const strategy = config.db?.strategy ?? 'none';
-  const required = REQUIRED_HOOKS[strategy];
+  // hasOwnProperty, not a bare lookup: a strategy of 'constructor' would
+  // otherwise resolve off Object.prototype and die in filter().
+  const required = Object.prototype.hasOwnProperty.call(REQUIRED_HOOKS, strategy)
+    ? REQUIRED_HOOKS[strategy]
+    : undefined;
 
   // An unrecognised strategy reaches neither branch in globalSetup and would
   // run with no dump, no restore and no dirty flag.
