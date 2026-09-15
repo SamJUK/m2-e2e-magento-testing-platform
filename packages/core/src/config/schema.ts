@@ -1,5 +1,7 @@
 // Shell hooks let projects plug in however they exec into their container.
-// Each hook is optional; any capability that relies on a missing hook is skipped.
+// Each hook is optional, EXCEPT where db.strategy needs it: 'dump-restore'
+// requires dbDump, dbImport and dbQuery, and 's3-import' requires dbImport.
+// Global setup refuses to run otherwise rather than skipping silently.
 //
 // Example patterns:
 //   Warden:  exec: (cmd) => execa('warden', ['shell', '-c', cmd])
@@ -16,7 +18,7 @@ export interface ProjectShellHooks {
   /**
    * Run a SQL statement against the Magento database and return stdout.
    * Used by the dirty-run guard (dump-restore strategy) to track incomplete
-   * runs via the Magento `flag` table. Guard is skipped if absent.
+   * runs via the Magento `flag` table. Required by 'dump-restore'.
    */
   dbQuery?: (sql: string) => Promise<string>;
 }

@@ -4,6 +4,8 @@ import type { ProjectConfig } from '../config/schema';
  * Dirty-run guard for the dump-restore strategy, tracked in Magento's `flag`
  * table so it lives and dies with the database itself.
  *
+ * Requires the dbQuery hook, which global setup enforces for this strategy.
+ *
  * Lifecycle: globalSetup takes the dump FIRST, then sets the flag; a
  * successful globalTeardown restore re-imports the pre-flag dump (removing
  * the row) and clears it explicitly as belt-and-braces. If a run is killed

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 
 /**
  * Waits for Magento's form-key machinery to settle.
@@ -22,46 +22,69 @@ import type { Page } from '@playwright/test';
  * right key, and `Framework\Data\Form\FormKey\Validator` compares the POSTed
  * value against the session rather than against any cookie.
  *
- * Waiting unconditionally for the cookie hangs forever on such a store - and
- * `full_page: 0` is an ordinary developer configuration, not a broken one. It
- * cost a whole suite run against a Mage-OS stack: every test that touched a
- * form timed out in `waitForFunction` while the pages themselves rendered
- * perfectly.
+ * Waiting unconditionally for the cookie hangs forever on such a store, and
+ * `full_page: 0` is an ordinary developer configuration. It cost a whole suite
+ * run against a Mage-OS stack.
  */
-export async function waitForFormKey(page: Page): Promise<void> {
-  // How long to keep waiting for a cookie before concluding there will never
-  // be one. Only reached on stores with full page cache off; anywhere the
-  // provider runs at all, the cookie lands far inside this.
-  const noCookieGraceMs = 10_000;
-  const giveUpOnCookieAt = Date.now() + noCookieGraceMs;
+/**
+ * Whether this store mints a form-key cookie, remembered per browser context.
+ *
+ * Without this the no-cookie grace is paid on EVERY call, and a store with the
+ * full page cache off never mints one: ~60 call sites across the page objects,
+ * two back to back in a single sign-in helper. Both stock demo stores run with
+ * full_page off, so the tax was being paid for real.
+ */
+type FormKeyProvider = 'provider' | 'absent';
+const providerByContext = new WeakMap<BrowserContext, FormKeyProvider>();
 
-  await page.waitForFunction(
-    (deadline) => {
+export async function waitForFormKey(page: Page): Promise<void> {
+  const context = page.context();
+
+  if (providerByContext.get(context) === 'absent') {
+    await page.waitForFunction(
+      () => {
+        const inputs = document.querySelectorAll<HTMLInputElement>('input[name="form_key"]');
+        return inputs.length === 0 || Array.from(inputs).every((input) => input.value !== '');
+      },
+      undefined,
+      { timeout: 15_000 },
+    );
+    return;
+  }
+
+  const graceMs = 10_000;
+
+  // The deadline is computed inside the page, not passed in: a Node timestamp
+  // compared against a page clock skews under a remote browser.
+  const outcome = await page.waitForFunction(
+    (grace) => {
+      const scope = window as unknown as { __e2eFormKeyDeadline?: number };
+      if (scope.__e2eFormKeyDeadline === undefined) {
+        scope.__e2eFormKeyDeadline = Date.now() + grace;
+      }
+
       const inputs = document.querySelectorAll<HTMLInputElement>('input[name="form_key"]');
       const match = document.cookie.match(/(?:^|;\s*)form_key=([^;]+)/);
 
-      if (!match) {
-        // No cookie yet. Two very different situations, and the rendered
-        // inputs cannot tell them apart: a server-rendered form carries a real
-        // key on first paint whether or not a provider is coming.
-        //
-        // So keep waiting until the grace period is spent. That matters for
-        // more than correctness — on a store where the provider DOES run, this
-        // wait is also, incidentally, what gives Magento's admin AJAX handlers
-        // time to bind. Returning as soon as the inputs looked populated made
-        // admin order creation click a button whose handler did not exist yet,
-        // which fails as a click that is accepted and does nothing.
-        if (Date.now() < deadline) return false;
-        return inputs.length > 0 && Array.from(inputs).every((input) => input.value !== '');
+      if (match) {
+        const cookieKey = decodeURIComponent(match[1]);
+        // JS-built forms read the cookie directly, so no inputs is fine.
+        if (inputs.length === 0) return 'provider';
+        return Array.from(inputs).every((input) => input.value === cookieKey) ? 'provider' : false;
       }
 
-      const cookieKey = decodeURIComponent(match[1]);
-      // No server-rendered inputs: JS-built forms read the cookie directly.
-      if (inputs.length === 0) return true;
-      return Array.from(inputs).every((input) => input.value === cookieKey);
+      if (Date.now() < scope.__e2eFormKeyDeadline) return false;
+      // No provider on this store: the page was rendered for this session, so
+      // its own inputs are the right key. No inputs at all is also settled -
+      // demanding some is what used to hang a JS-only page for the full wait.
+      if (inputs.length === 0) return 'absent';
+      return Array.from(inputs).every((input) => input.value !== '') ? 'absent' : false;
     },
-    giveUpOnCookieAt,
+    graceMs,
+    { timeout: graceMs + 20_000 },
   );
+
+  providerByContext.set(context, (await outcome.jsonValue()) as FormKeyProvider);
 }
 
 /**
