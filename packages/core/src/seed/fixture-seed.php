@@ -353,7 +353,12 @@ if ($staleRoleIds) {
     );
     $foreign = [];
     foreach ($held as $row) {
-        if (!in_array((int) $row['user_id'], $staleUserIds, true)) {
+        // Held by a real, present admin that this suite did not create. A link
+        // row whose admin_user is gone is ours to clear, not a reason to spare.
+        $holderExists = (int) $connection->fetchOne(
+            $connection->select()->from($userTable, 'COUNT(*)')->where('user_id = ?', (int) $row['user_id'])
+        ) > 0;
+        if ($holderExists && !in_array((int) $row['user_id'], $staleUserIds, true)) {
             // parent_id, not role_id: the link row has an id of its own, and
             // keying on it excluded nothing while reporting that it had.
             $foreign[(int) $row['parent_id']] = true;
@@ -583,7 +588,7 @@ $bundle = $productRepository->save($bundle);
 // Every product this seed creates, not only the bundle's: a first-run product
 // with no stock-index row renders out of stock under Update by Schedule.
 $seededIds = array_map(static function ($p) { return (int) $p->getId(); }, $parts);
-foreach ([$bundle, $optionedProduct, $oosProduct, $editableProduct, $orderableProduct] as $seeded) {
+foreach ([$bundle, $optionedProduct, $oosProduct, $editableProduct, $orderableProduct, $virtualProduct] as $seeded) {
     $seededIds[] = (int) $seeded->getId();
 }
 $seededIds = array_values(array_unique(array_filter($seededIds)));

@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 import type { ProjectConfig } from '../config/schema';
 
 /**
@@ -15,6 +17,19 @@ import type { ProjectConfig } from '../config/schema';
  */
 export const DIRTY_FLAG_CODE = 'e2e_dirty_run';
 
+/**
+ * A copy of the marker, kept beside the dump rather than inside the database.
+ *
+ * The flag row lives in the database the restore rewrites. mysqldump emits
+ * tables alphabetically, so a restore that dies part way through - a full disk,
+ * a killed container - has already dropped and recreated `flag` WITHOUT the
+ * row, while the later tables still hold the run's orders. The next run then
+ * passes the guard and dumps a polluted store as its clean restore point.
+ */
+function sentinelPath(config: ProjectConfig): string {
+  return `${config.db?.dumpPath ?? '/tmp/e2e-db-dump.sql'}.dirty`;
+}
+
 function flagTable(config: ProjectConfig): string {
   return `${config.db?.tablePrefix ?? ''}flag`;
 }
@@ -29,7 +44,7 @@ export async function assertNotDirtyRun(config: ProjectConfig): Promise<void> {
     ``+
     `SELECT flag_code FROM ${flagTable(config)} WHERE flag_code='${DIRTY_FLAG_CODE}'`,
   );
-  if (!out.includes(DIRTY_FLAG_CODE)) return;
+  if (!out.includes(DIRTY_FLAG_CODE) && !fs.existsSync(sentinelPath(config))) return;
 
   const dumpPath = config.db?.dumpPath ?? '/tmp/e2e-db-dump.sql';
   throw new Error(
@@ -39,13 +54,14 @@ export async function assertNotDirtyRun(config: ProjectConfig): Promise<void> {
     `To recover, either:\n` +
     `  1. Restore the clean dump taken before that run: import ${dumpPath} ` +
     `(e.g. \`warden db import < ${dumpPath}\`) — this also removes the flag; or\n` +
-    `  2. Accept the current database state and clear the flag: ` +
+    `  2. Accept the current database state: delete ${sentinelPath(config)} and clear the flag: ` +
     `DELETE FROM ${flagTable(config)} WHERE flag_code='${DIRTY_FLAG_CODE}'`,
   );
 }
 
 export async function markDirtyRun(config: ProjectConfig): Promise<void> {
   if (!config.shell?.dbQuery) return;
+  fs.writeFileSync(sentinelPath(config), new Date().toISOString());
   await config.shell.dbQuery(
     `INSERT INTO ${flagTable(config)} (flag_code, state, last_update) VALUES ('${DIRTY_FLAG_CODE}', 1, NOW())`,
   );
@@ -53,5 +69,6 @@ export async function markDirtyRun(config: ProjectConfig): Promise<void> {
 
 export async function clearDirtyRun(config: ProjectConfig): Promise<void> {
   if (!config.shell?.dbQuery) return;
+  fs.rmSync(sentinelPath(config), { force: true });
   await config.shell.dbQuery(`DELETE FROM ${flagTable(config)} WHERE flag_code='${DIRTY_FLAG_CODE}'`);
 }

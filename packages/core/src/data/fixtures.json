@@ -84,6 +84,8 @@
   "product": {
     "addToCartNotificationTextRegex": "You added .* to your shopping cart.",
     "simpleProductTitle": "Joust Duffle Bag",
+    "configurableProductTitleComment": "Title of slugs.products.configurableProduct, so a cart line can be found for it. Needed because add-to-cart only observes the POST response, and Magento answers a REFUSED add with a redirect too - the cart read-back is what tells them apart.",
+    "configurableProductTitle": "Olivia 1/4 Zip Light Jacket",
     "adminOrderableComment": "The product the admin order-creation tests put on their orders. Deliberately a seeded fixture rather than the sample-data simple product: every admin-created order consumes stock, and on a store whose database is never rolled back that quietly drains the one SKU the cart, minicart and checkout tests all add, until they fail with an out-of-stock PDP. The seed rewrites this product's quantity (and clears its inventory reservations) on every run, so the orders these tests place cost nothing permanent. Matched by SKU because the admin's Create New Order product grid filters on SKU and name in separate boxes, and SKU is the one guaranteed to match a single row.",
     "adminOrderable": {
       "sku": "e2e-admin-orderable",
