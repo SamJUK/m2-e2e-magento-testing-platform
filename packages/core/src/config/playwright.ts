@@ -277,7 +277,14 @@ export function createPlaywrightConfig(
   return defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
-    retries: retries ?? (process.env.CI ? 2 : 0),
+    // Retried locally as well as in CI, deliberately.
+    //
+    // With no local retries an intermittent failure is indistinguishable from
+    // a real one: the run just goes red and someone re-runs by hand to find
+    // out which. Playwright already knows the difference and reports it as
+    // "flaky" — but only if it is allowed to retry. Costing a few minutes on a
+    // genuinely failing run is worth never mistaking flake for breakage again.
+    retries: retries ?? 2,
     // Local dev-mode Magento cannot serve a full CPU's worth of parallel
     // browsers without page loads blowing test budgets.
     workers: process.env.CI ? 1 : 4,
