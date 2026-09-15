@@ -320,48 +320,56 @@ if (!empty($cfg['mayRestock'])) {
 
 // Remove the admin users and roles the authorization test leaves behind: it
 // ends signed in AS the restricted user, so it cannot clean up after itself.
-// Gated like the restock above - these are real admin accounts.
-if (!empty($cfg['mayRestock'])) {
-    $resource = $om->get(\Magento\Framework\App\ResourceConnection::class);
-    $connection = $resource->getConnection();
-    $userTable = $resource->getTableName('admin_user');
-    $roleTable = $resource->getTableName('authorization_role');
-    $ruleTable = $resource->getTableName('authorization_rule');
+// Ungated - these are accounts the suite itself created, so leaving them on a
+// store that keeps its data is the dangerous option, not removing them.
+$resource = $om->get(\Magento\Framework\App\ResourceConnection::class);
+$connection = $resource->getConnection();
+$userTable = $resource->getTableName('admin_user');
+$roleTable = $resource->getTableName('authorization_role');
+$ruleTable = $resource->getTableName('authorization_rule');
 
-    // By parent_id, never by name: a user row's role_name is the admin's FIRST
-    // NAME. Orphaning one makes Acl\Builder throw on every admin request.
-    $staleRoleIds = $connection->fetchCol(
-        $connection->select()->from($roleTable, 'role_id')->where('role_name LIKE ?', 'E2E Restricted %')
+// Underscores are LIKE wildcards, so escape them or this matches far wider
+// than the prefix it appears to.
+$staleUserIds = array_filter(array_map('intval', $connection->fetchCol(
+    $connection->select()->from($userTable, 'user_id')->where('username LIKE ?', 'e2e\_restricted\_%')
+)));
+$staleRoleIds = array_filter(array_map('intval', $connection->fetchCol(
+    $connection->select()->from($roleTable, 'role_id')->where('role_name LIKE ?', 'E2E Restricted %')
+)));
+
+$deletedUsers = 0;
+$deletedRoles = 0;
+
+if ($staleRoleIds) {
+    $connection->delete($ruleTable, ['role_id IN (?)' => $staleRoleIds]);
+}
+
+// User rows before their groups, or Acl\Builder throws on every admin request
+// with "Parent Role id N does not exist". Matched on user_id as well as
+// parent_id, to catch a link whose group was renamed out of the pattern.
+$linkConditions = [];
+if ($staleRoleIds) {
+    $linkConditions[] = $connection->quoteInto('parent_id IN (?)', $staleRoleIds);
+}
+if ($staleUserIds) {
+    $linkConditions[] = $connection->quoteInto('(user_type = 2 AND user_id IN (?))', $staleUserIds);
+}
+if ($linkConditions) {
+    $deletedRoles += $connection->delete($roleTable, implode(' OR ', $linkConditions));
+}
+if ($staleRoleIds) {
+    $deletedRoles += $connection->delete($roleTable, ['role_id IN (?)' => $staleRoleIds]);
+}
+if ($staleUserIds) {
+    $deletedUsers = $connection->delete($userTable, ['user_id IN (?)' => $staleUserIds]);
+}
+
+if ($deletedUsers || $deletedRoles) {
+    printf(
+        "[e2e-seed] removed %d leftover admin user(s) and %d role row(s) from earlier authz runs\n",
+        $deletedUsers,
+        $deletedRoles
     );
-
-    $deletedUsers = 0;
-    $deletedRoles = 0;
-
-    if ($staleRoleIds) {
-        $linkedUserIds = $connection->fetchCol(
-            $connection->select()->from($roleTable, 'user_id')->where('parent_id IN (?)', $staleRoleIds)
-        );
-        $linkedUserIds = array_filter(array_map('intval', $linkedUserIds));
-
-        $connection->delete($ruleTable, ['role_id IN (?)' => $staleRoleIds]);
-        $deletedRoles = $connection->delete($roleTable, ['parent_id IN (?)' => $staleRoleIds]);
-        $deletedRoles += $connection->delete($roleTable, ['role_id IN (?)' => $staleRoleIds]);
-
-        if ($linkedUserIds) {
-            $deletedUsers = $connection->delete($userTable, ['user_id IN (?)' => $linkedUserIds]);
-        }
-    }
-
-    // Left over from a run that died between the two saves.
-    $deletedUsers += $connection->delete($userTable, ['username LIKE ?' => 'e2e_restricted_%']);
-
-    if ($deletedUsers || $deletedRoles) {
-        printf(
-            "[e2e-seed] removed %d leftover admin user(s) and %d role row(s) from earlier authz runs\n",
-            $deletedUsers,
-            $deletedRoles
-        );
-    }
 }
 
 // A dedicated product rather than an existing sample-data SKU flipped out of

@@ -88,7 +88,11 @@ export class AdminPermissionsPage {
     await expect(roleRow, `the ${roleName} role has a row to choose`).toBeVisible({
       timeout: 30_000,
     });
-    await roleRow.locator('input[type="radio"]').check();
+    const roleRadio = roleRow.locator('input[type="radio"]');
+    await roleRadio.check();
+    // Magento saves a user with no role at all without complaining, and a
+    // roleless user is refused every page exactly as an empty role is.
+    await expect(roleRadio, `the ${roleName} role is selected`).toBeChecked({ timeout: 15_000 });
 
     await this.page.getByRole('button', { name: s.saveUserButtonLabel }).click();
     await this.expectAdminSaved(

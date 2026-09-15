@@ -141,21 +141,8 @@ export class AdminOrderPage implements IAdminOrderPage {
   private async settle(): Promise<void> {
     const mask = this.page.locator(this.data.selectors.admin.orders.create.loadingMaskSelector);
 
-    // Wait for the mask to APPEAR before waiting for it to go.
-    //
-    // Asserting only that it is hidden proves nothing: it is hidden before the
-    // request starts as well as after it finishes. This used to sleep 500ms
-    // and then check, which quietly became "did the mask manage to appear
-    // within half a second" - true on an idle machine, false on a loaded one.
-    // When it was false `settle` returned having waited for no load at all,
-    // the caller found the area it wanted still missing, and the retry clicked
-    // again INTO the request already in flight. That is the shape of the
-    // intermittent admin-order failures: a page sitting on the customer grid
-    // while the loop clicks a button whose work is already happening.
-    //
-    // Tolerating the timeout is the point of the catch: plenty of calls here
-    // follow an interaction that triggers no area reload, and those must cost
-    // 2 seconds rather than fail.
+    // Wait for the mask to appear first: "hidden" is true before the request
+    // starts as well as after it ends. The catch allows a no-reload click.
     await mask.waitFor({ state: 'visible', timeout: 2_000 }).catch(() => {});
     await expect(mask).toBeHidden({ timeout: 60_000 });
     await this.page.waitForTimeout(500);
@@ -204,9 +191,11 @@ export class AdminOrderPage implements IAdminOrderPage {
       }
 
       if ((await storeViews.count()) > 0 && (await storeViews.first().isVisible())) {
-        await storeViews.first().click();
+        await storeViews.first().click({ timeout: 15_000 });
       } else {
-        await page.getByRole('button', { name: s.newCustomerButtonLabel, exact: true }).click();
+        await page
+          .getByRole('button', { name: s.newCustomerButtonLabel, exact: true })
+          .click({ timeout: 15_000 });
       }
       await this.settle();
 

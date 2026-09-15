@@ -1,10 +1,15 @@
 import type { ProjectConfig } from '../config/schema';
 
 /** Shell hooks each DB strategy cannot work without. */
-const REQUIRED_HOOKS = {
+type DbStrategy = NonNullable<ProjectConfig['db']>['strategy'];
+
+// Total, not Partial: adding a strategy must not compile until it declares
+// what it needs, or it runs unguarded — the very thing this file prevents.
+const REQUIRED_HOOKS: Record<DbStrategy, readonly string[]> = {
+  none: [],
   'dump-restore': ['dbDump', 'dbImport', 'dbQuery'],
   's3-import': ['dbImport'],
-} as const satisfies Partial<Record<NonNullable<ProjectConfig['db']>['strategy'], readonly string[]>>;
+};
 
 /**
  * Refuses to run when the configured DB strategy has no hooks to carry it out.
@@ -14,7 +19,16 @@ const REQUIRED_HOOKS = {
  */
 export function assertStrategyHooksConfigured(config: ProjectConfig): void {
   const strategy = config.db?.strategy ?? 'none';
-  const required: readonly string[] = REQUIRED_HOOKS[strategy as keyof typeof REQUIRED_HOOKS] ?? [];
+  const required = REQUIRED_HOOKS[strategy];
+
+  // An unrecognised strategy reaches neither branch in globalSetup and would
+  // run with no dump, no restore and no dirty flag.
+  if (required === undefined) {
+    throw new Error(
+      `[e2e-core] REFUSING TO RUN: db.strategy '${strategy}' is not a known strategy. ` +
+        `Expected one of: ${Object.keys(REQUIRED_HOOKS).join(', ')}.`,
+    );
+  }
   if (required.length === 0) return;
 
   const shell = (config.shell ?? {}) as Record<string, unknown>;

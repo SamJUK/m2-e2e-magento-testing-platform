@@ -55,6 +55,7 @@ export class CategoryPage implements ICategoryPage {
     await expect(async () => {
       await this.sorterDropdown.selectOption(
         order ?? this.data.inputs.category.listingPage.sortOrder,
+        { timeout: 15_000 },
       );
       await this.sorterDropdown.evaluate((el: HTMLSelectElement) => {
         el.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));

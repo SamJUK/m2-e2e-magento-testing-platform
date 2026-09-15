@@ -46,5 +46,12 @@ export class AdminLoginPage implements IAdminLoginPage {
     await this.passwordField.fill(password);
     await this.submitButton.click();
     await this.page.waitForLoadState('domcontentloaded');
+    // Not the menubar: a role with no resources renders none. The form going
+    // away is what separates "signed in, forbidden" from "sign-in refused",
+    // and without it a refused sign-in asserts denial against a guest.
+    await expect(
+      this.usernameField,
+      `the sign-in for ${username} was accepted`,
+    ).toBeHidden({ timeout: 30_000 });
   }
 }
