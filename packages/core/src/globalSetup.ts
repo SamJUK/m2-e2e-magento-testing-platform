@@ -26,12 +26,13 @@ export async function runGlobalSetup(config: ProjectConfig): Promise<void> {
   // storefront serving, it just makes every category and search test fail as a
   // selector timeout. Checked first so the run ends with the cause rather than
   // ten minutes later with the symptom.
+  // Free and instant, so ahead of the network check: a misconfigured
+  // strategy should not hide behind a search-engine timeout.
+  assertStrategyHooksConfigured(config);
+
   await assertSearchEngineReachable(config);
 
   const strategy = config.db?.strategy ?? 'none';
-
-  // Before the dump: a strategy with no hooks behind it does nothing, quietly.
-  assertStrategyHooksConfigured(config);
 
   if (strategy === 'dump-restore') {
     // Order matters: guard → dump → mark. The dump is taken before the flag

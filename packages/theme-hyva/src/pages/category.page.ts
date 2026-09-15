@@ -54,7 +54,7 @@ export class CategoryPage implements ICategoryPage {
     // The sorter's change handler binds after the markup, so a selection made
     // too early fires into nothing. Retried as one unit.
     await expect(async () => {
-      await this.sorterDropdown.selectOption(value ?? wanted.toLowerCase());
+      await this.sorterDropdown.selectOption(value ?? wanted.toLowerCase(), { timeout: 15_000 });
       await this.page.waitForURL((url) => url.toString() !== before, {
         waitUntil: 'domcontentloaded',
         timeout: 15_000,

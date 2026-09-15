@@ -75,6 +75,15 @@ export async function seedFixtureEntities(config: ProjectConfig): Promise<void> 
         name: fixtures.product.virtual.title,
         price: fixtures.product.virtual.price,
       },
+      customOptions: {
+        sku: fixtures.product.customOptions.sku,
+        urlKey: fixtures.product.customOptions.urlKey,
+        name: fixtures.product.customOptions.title,
+        price: fixtures.product.customOptions.price,
+        requiredOptionTitle: fixtures.product.customOptions.requiredOptionTitle,
+        optionalOptionTitle: fixtures.product.customOptions.optionalOptionTitle,
+        optionalOptionPrice: fixtures.product.customOptions.optionalOptionPrice,
+      },
       bundle: {
         sku: fixtures.product.bundle.sku,
         urlKey: fixtures.product.bundle.urlKey,

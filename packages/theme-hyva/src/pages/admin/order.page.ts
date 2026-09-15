@@ -140,7 +140,10 @@ export class AdminOrderPage implements IAdminOrderPage {
 
   private async settle(): Promise<void> {
     const mask = this.page.locator(this.data.selectors.admin.orders.create.loadingMaskSelector);
-    await this.page.waitForTimeout(500);
+
+    // Wait for the mask to appear first: "hidden" is true before the request
+    // starts as well as after it ends. The catch allows a no-reload click.
+    await mask.waitFor({ state: 'visible', timeout: 2_000 }).catch(() => {});
     await expect(mask).toBeHidden({ timeout: 60_000 });
     await this.page.waitForTimeout(500);
   }
@@ -188,9 +191,11 @@ export class AdminOrderPage implements IAdminOrderPage {
       }
 
       if ((await storeViews.count()) > 0 && (await storeViews.first().isVisible())) {
-        await storeViews.first().click();
+        await storeViews.first().click({ timeout: 15_000 });
       } else {
-        await page.getByRole('button', { name: s.newCustomerButtonLabel, exact: true }).click();
+        await page
+          .getByRole('button', { name: s.newCustomerButtonLabel, exact: true })
+          .click({ timeout: 15_000 });
       }
       await this.settle();
 
@@ -236,7 +241,16 @@ export class AdminOrderPage implements IAdminOrderPage {
         productRow,
         `the order form's product grid finds exactly one row for SKU ${order.sku}`,
       ).toHaveCount(1, { timeout: 30_000 });
-      await productRow.locator(s.productCheckboxSelector).check({ timeout: 15_000 });
+      // Click the row, not the checkbox: the row's own onclick toggles it, so
+      // check() lands twice and leaves it clear.
+      const productCheckbox = productRow.locator(s.productCheckboxSelector);
+      if (!(await productCheckbox.isChecked())) {
+        await productRow.click({ timeout: 15_000 });
+      }
+      await expect(
+        productCheckbox,
+        `the product grid row for ${order.sku} is selected`,
+      ).toBeChecked({ timeout: 15_000 });
     }).toPass({ timeout: 120_000 });
 
     await productRow.locator(s.productQuantitySelector).fill(String(order.quantity ?? 1));

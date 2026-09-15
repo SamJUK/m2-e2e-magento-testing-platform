@@ -195,7 +195,11 @@ export class CheckoutPage implements ICheckoutPage {
     await this.page.waitForFunction(() => 'checkoutConfig' in window, undefined, {
       timeout: 45_000,
     });
-    await shippingForm.getByLabel(s.billing.emailFieldLabel).fill(order.email);
+    const guestEmailField = shippingForm.getByLabel(s.billing.emailFieldLabel);
+    await expect(guestEmailField, 'the guest checkout email field is ready').toBeEditable({
+      timeout: 120_000,
+    });
+    await guestEmailField.fill(order.email);
     await this.fillNewShippingAddress(order);
     await shippingForm.locator(s.billing.streetAddressFieldSelector).clear();
 
