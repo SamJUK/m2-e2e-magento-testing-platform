@@ -20,7 +20,7 @@ Read the headline as: unique ✅ test titles, then ⬜ rows. A few tests are
 listed under two areas on purpose (the invoice and shipment emails belong to
 both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 
-**Today: 95 ✅ · 55 ⬜**
+**Today: 111 ✅ · 58 ⬜**
 
 ---
 
@@ -69,7 +69,11 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 | `can switch currency` | `@category @currency` | ✅ |
 | `clearing all layered filters restores the full listing` | `@category @filter` | ✅ |
 | `two layered filters combine` | `@category @filter` | ✅ |
+| `a layered navigation filter's count matches the number of results` | `@category @filter` | ✅ |
+| `the chosen sort order survives paging` | `@category @sort @pagination` | ✅ |
+| `an anchor category includes its child categories' products` | `@category @anchor` | ✅ |
 | the grid/list mode toggle changes the listing layout | | ⬜ |
+| a category with children renders links to them | | ⬜ Luma renders subcategories as a layered-nav facet rather than as links, so there is no shape both themes share yet |
 | an empty category renders its empty state | | ⬜ |
 
 ### Search
@@ -91,7 +95,10 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 | `bundle product renders its options and the price follows the selection` | `@product @bundle` | ✅ |
 | `bundle product can be added to the cart with its selections` | `@product @bundle @cart` | ✅ |
 | `out of stock product shows its status and cannot be added to cart` | `@product @negative` | ✅ |
+| `a required custom option is asked for before the product can be added` | `@product @options @negative` | ✅ |
+| `an optional custom option's price reaches the cart` | `@product @options @cart` | ✅ |
 | a grouped product adds its child quantities to the cart | | ⬜ |
+| a quantity increment and a minimum sale quantity are enforced | | ⬜ Both are values the merchant sets, so the test would need them declared; left until there is a case for it |
 | a downloadable product adds to the cart and the link is in the account after purchase | | ⬜ |
 | the image gallery switches the main image and opens the lightbox | | ⬜ |
 | a tier price applies once its quantity threshold is reached | | ⬜ |
@@ -130,6 +137,8 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 | `a guest cart survives signing in` | `@cart @customer` | ✅ |
 | `the cart survives a page reload and a new tab` | `@cart @smoke` | ✅ |
 | `the empty cart renders its empty state` | `@cart` | ✅ |
+| `adding the same product twice merges into one cart line` | `@cart` | ✅ |
+| `a cart of several products and quantities still adds up` | `@cart @totals` | ✅ |
 | estimate shipping and tax in the cart updates the totals | | ⬜ |
 | cross-sell products render in the cart | | ⬜ |
 
@@ -167,6 +176,8 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 | `the payment method selected at checkout is the one recorded on the order` | `@checkout @payment @customer` | ✅ |
 | `checkout rejects an incomplete shipping address` | `@checkout @negative` | ✅ |
 | `a virtual-only cart skips the shipping step entirely` | `@checkout @virtual` | ✅ |
+| `a guest can create an account from the order success page` | `@checkout @customer` | ✅ |
+| the account a guest creates there inherits the order they just placed | | ➖ Magento's delegated creation does not survive full page cache: `customer_account_create.xml` declares no `cacheable="false"`, so the form is served from cache while the delegation payload is session-scoped and consumed at render. Measured on a Varnish-fronted store: the account is created, the order stays a guest order |
 | changing the shipping method changes the order total | | ⬜ |
 | a different billing address is recorded on the order | | ⬜ |
 | an existing account email prompts sign-in at checkout | | ⬜ |
@@ -228,6 +239,16 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 
 ## Admin
 
+### Session & CSRF
+
+| Test | Tags | Status |
+|---|---|---|
+| `a password reset link cannot be used twice` | `@customer @password @security @negative` | ✅ |
+| `the session id changes when a customer signs in` | `@customer @security` | ✅ |
+| `a form submitted with an invalid form key is refused` | `@contact @security @negative` | ✅ |
+| `cookie restriction mode behaves as the store declares` | `@security @cookies` | ✅ |
+| a reset link stops working once it has aged out | | ➖ Needs the store's token lifetime changed underneath the run; Magento gives the same message either way, so single use is what is testable |
+
 ### Access & system
 
 | Test | Tags | Status |
@@ -238,6 +259,9 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 | flushing the cache from the admin succeeds | | ⬜ |
 | an invalid admin login is rejected | | ⬜ |
 | the index management grid loads and shows every indexer valid | | ⬜ |
+| `an admin role with no resources is refused every admin page` | `@admin @authz @security @negative` | ✅ |
+| admin login lockout after repeated failures | | ➖ Would lock the shared admin user and fail every other admin test in the same run. Unlocking needs `admin:user:unlock`, and tests have no shell access |
+| the admin session times out | | ➖ Magento ships a 15 minute idle timeout; waiting it out is longer than the whole suite |
 
 ### Catalog
 
@@ -245,6 +269,7 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 |---|---|---|
 | `can find a product in the grid and open its edit form` | `@admin` | ✅ |
 | `can edit a product and save the change` | `@admin` | ✅ |
+| `changing a product's url key redirects the old url to the new one` | `@admin @catalog @seo` | ✅ |
 | creating a simple product makes it visible on the storefront | | ⬜ |
 | disabling a product removes it from the storefront | | ⬜ |
 | a category can be created and shows in the main menu | | ⬜ |
@@ -254,7 +279,11 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 | Test | Tags | Status |
 |---|---|---|
 | `can find a customer in the grid and open their detail page` | `@admin` | ✅ |
+| `changing the account email requires the current password` | `@customer @profile @security @negative` | ✅ |
+| `repeated failed sign-ins lock the account as the store declares` | `@customer @security @negative` | ✅ |
+| a customer disabled in the admin can no longer sign in | | ➖ Magento CE has no active/inactive flag on a customer; the admin can only delete or unlock one, so there is nothing to assert |
 | an admin-created customer can sign in on the storefront | | ⬜ |
+| reordering a product that has since been disabled is refused | | ⬜ Wants a product safe to disable mid-run. The admin-editable fixture is not orderable and the orderable one is shared with the checkout tests, so disabling it would race them at more than one worker |
 
 ### Sales
 
