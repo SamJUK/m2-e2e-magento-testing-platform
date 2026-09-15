@@ -251,3 +251,72 @@ test(
       .toBe(0);
   },
 );
+
+test(
+  'adding the same product twice merges into one cart line',
+  { tag: ['@cart'] },
+  async ({ productPage, cartPage, page, data }) => {
+    // Two PDP round-trips plus a cart read.
+    test.slow();
+
+    const title = data.fixtures.product.simpleProductTitle;
+
+    await productPage.addSimpleProductToCart(data.slugs.products.simpleProduct);
+    await productPage.addSimpleProductToCart(data.slugs.products.simpleProduct);
+
+    await cartPage.open();
+
+    // One line, quantity two. A cart that grows a second line for the same
+    // simple product breaks every quantity rule the store has - minimum
+    // quantities, tier prices and free-shipping thresholds all count lines
+    // rather than units once this regresses, and the customer sees a cart that
+    // looks merely untidy.
+    await expect(
+      page.locator(data.selectors.cart.cartItemSelector),
+      'the cart holds a single line',
+    ).toHaveCount(1);
+    expect(
+      Number(await cartPage.getQuantityField(title).inputValue()),
+      'the line carries both units',
+    ).toBe(2);
+
+    // And the money followed the merge rather than staying at one unit.
+    await cartPage.expectTotalsAreCoherent(title);
+  },
+);
+
+test.describe('Cart totals across several lines', () => {
+  test(
+    'a cart of several products and quantities still adds up',
+    { tag: ['@cart', '@totals'] },
+    async ({ productPage, cartPage, page, data }) => {
+      // Three PDP round-trips and a cart read.
+      test.slow();
+
+      const first = data.fixtures.product.simpleProductTitle;
+      const second = data.fixtures.product.secondaryProductTitle;
+
+      await productPage.addSimpleProductToCart(data.slugs.products.simpleProduct, 3);
+      await productPage.addSimpleProductToCart(data.slugs.products.secondaryProduct, 2);
+
+      await cartPage.open();
+
+      // Each line on its own first, so a failure names the line rather than
+      // just the total.
+      await cartPage.expectTotalsAreCoherent(first);
+      await cartPage.expectTotalsAreCoherent(second);
+
+      // Then the sum. Rounding is per line in Magento, so a store that rounds
+      // the subtotal instead drifts by a penny or two once quantities climb -
+      // invisible on a single line, and exactly what a multi-line cart is for.
+      const firstTotal = await readMoney(cartPage.getLineTotal(first), 'first line total');
+      const secondTotal = await readMoney(cartPage.getLineTotal(second), 'second line total');
+      const subtotal = await readMoney(cartPage.subtotal, 'cart subtotal');
+
+      expect(
+        subtotal,
+        'the subtotal is the sum of the line totals, to the penny',
+      ).toBeCloseTo(firstTotal + secondTotal, 2);
+    },
+  );
+});

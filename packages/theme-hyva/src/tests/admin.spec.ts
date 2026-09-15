@@ -206,3 +206,67 @@ test.describe('Cart Price Rules', () => {
     },
   );
 });
+
+test.describe('Admin > Catalog > URL rewrites', () => {
+  test(
+    "changing a product's url key redirects the old url to the new one",
+    { tag: ['@admin', '@catalog', '@seo'] },
+    async ({ adminLoginPage, adminProductPage, data }) => {
+      // Two admin saves, each re-opening the grid, plus two raw requests.
+      test.slow();
+
+      const product = data.fixtures.product.adminEditable;
+      const newUrlKey = `${product.urlKey}-${faker.string.alphanumeric(8).toLowerCase()}`;
+
+      await adminLoginPage.login();
+
+      await adminProductPage.changeUrlKeyAndExpectRedirect(
+        product.sku,
+        product.title,
+        newUrlKey,
+        data.slugs.products.adminEditableProduct,
+      );
+
+      // Put the url key back, so this can run again on a store whose database
+      // is never rolled back — and prove the restore landed by requiring the
+      // redirect to run the other way, rather than trusting the save notice.
+      await adminProductPage.changeUrlKeyAndExpectRedirect(
+        product.sku,
+        product.title,
+        product.urlKey,
+        `/${newUrlKey}.html`,
+      );
+    },
+  );
+});
+
+test.describe('Admin > Permissions', () => {
+  test(
+    'an admin role with no resources is refused every admin page',
+    { tag: ['@admin', '@authz', '@security', '@negative'] },
+    async ({ adminLoginPage, adminPermissionsPage, data }) => {
+      // Two admin forms, a sign-out, a sign-in and two refused pages.
+      test.slow();
+
+      const token = faker.string.alphanumeric(8).toLowerCase();
+      const roleName = `E2E Restricted ${token}`;
+      // Not derived from the token: the username is visible in the admin grid.
+      const user = {
+        username: `e2e_restricted_${token}`,
+        password: faker.internet.password({ length: 20, prefix: 'X1@' }),
+      };
+
+      await adminLoginPage.login();
+      await adminPermissionsPage.createRoleWithNoResources(roleName);
+      await adminPermissionsPage.createUserWithRole(user, roleName);
+
+      await adminLoginPage.loginAs(user.username, user.password);
+
+      // Two different routes, because a single one could be refused for a
+      // reason that has nothing to do with the role - a missing module, a bad
+      // slug. Both being refused is the role.
+      await adminPermissionsPage.expectAccessIsDenied(data.slugs.admin.products.grid);
+      await adminPermissionsPage.expectAccessIsDenied(data.slugs.admin.customers.grid);
+    },
+  );
+});

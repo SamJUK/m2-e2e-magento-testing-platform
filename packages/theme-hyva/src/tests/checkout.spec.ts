@@ -333,3 +333,52 @@ test.describe('Checkout (Virtual)', () => {
     },
   );
 });
+
+test(
+  'a guest can create an account from the order success page',
+  { tag: ['@checkout', '@customer'] },
+  async ({ productPage, checkoutPage, registerPage, accountPage, page, data }) => {
+    // Add to cart, three checkout steps, a registration and an order-history
+    // read. The longest flow in the suite.
+    test.slow();
+
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = faker.internet.exampleEmail({ firstName, lastName }).toLowerCase();
+    const password = faker.internet.password({ prefix: 'X1@' });
+    const address = {
+      firstName,
+      lastName,
+      company: faker.company.name(),
+      streetAddress: faker.location.streetAddress(),
+      country: 'United Kingdom',
+      county: faker.location.county(),
+      city: cityName(faker),
+      postcode: faker.location.zipCode(),
+      telephone: faker.phone.number(),
+    };
+
+    await productPage.addSimpleProductToCart(data.slugs.products.simpleProduct);
+    await page.goto(data.slugs.checkout);
+    await checkoutPage.placeOrder({
+      email,
+      billingAddress: address,
+      shippingAddress: address,
+    });
+
+    await checkoutPage.startAccountCreationFromOrderSuccess();
+    await registerPage.completeRegistration({ firstName, lastName, email, password });
+
+    // Deliberately NOT asserting that the order came with them.
+    //
+    // Magento's delegated creation (checkout/account/delegateCreate) is
+    // supposed to hand the order to the new account, and it does not survive
+    // full page cache: customer_account_create.xml declares no
+    // cacheable="false", so the create form is served from cache, and the
+    // delegation payload is session-scoped and consumed at render. Measured on
+    // a Varnish-fronted store - the account is created and the order stays a
+    // guest order. Asserting the linkage would fail on every cached store,
+    // which is nearly all of them. See COVERAGE.md.
+    await accountPage.expectDashboardShows({ firstName, lastName, email });
+  },
+);

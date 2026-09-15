@@ -241,3 +241,65 @@ test(
     await accountPage.setNewsletterSubscription(false);
   },
 );
+
+test(
+  'changing the account email requires the current password',
+  { tag: ['@customer', '@profile', '@security', '@negative'] },
+  async ({ registerPage, accountPage, data }) => {
+    // register + the edit form + a refused save + a sign-in check.
+    test.slow();
+
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = faker.internet.exampleEmail({ firstName, lastName }).toLowerCase();
+    const password = faker.internet.password({ prefix: 'X1@' });
+    const attemptedEmail = faker.internet.exampleEmail().toLowerCase();
+
+    await registerPage.createNewAccount({ firstName, lastName, email, password });
+
+    await accountPage.expectEmailChangeIsRejectedForWrongPassword(
+      attemptedEmail,
+      faker.internet.password({ prefix: 'Z9@' }),
+    );
+
+    // The refusal message on its own would also be satisfied by a store that
+    // complained and saved anyway. Read the stored address back, then prove
+    // the ORIGINAL credentials still work - which is what the customer would
+    // discover, in the worst way, if this ever regressed.
+    await accountPage.expectDashboardShows({ firstName, lastName, email });
+    await accountPage.logout();
+    await accountPage.login({ email, password });
+  },
+);
+
+test(
+  'repeated failed sign-ins lock the account as the store declares',
+  { tag: ['@customer', '@security', '@negative'] },
+  async ({ registerPage, accountPage, data }) => {
+    // Registration, a sign-out, then one round-trip per failed attempt plus
+    // the real one. Comfortably the longest customer test in the suite.
+    test.slow();
+
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = faker.internet.exampleEmail({ firstName, lastName }).toLowerCase();
+    const password = faker.internet.password({ prefix: 'X1@' });
+    const wrongPassword = faker.internet.password({ prefix: 'Z9@' });
+
+    await registerPage.createNewAccount({ firstName, lastName, email, password });
+    await accountPage.logout();
+
+    for (let attempt = 0; attempt < data.inputs.account.lockoutFailures; attempt++) {
+      await accountPage.expectLoginIsRejected({ email, password: wrongPassword });
+    }
+
+    // Magento words a locked account exactly as it words a wrong password, so
+    // the message proves nothing. What separates the two is what happens next
+    // with the RIGHT password: refused means locked, accepted means not.
+    if (data.features.security.customerLockout) {
+      await accountPage.expectLoginIsRejected({ email, password });
+    } else {
+      await accountPage.login({ email, password });
+    }
+  },
+);

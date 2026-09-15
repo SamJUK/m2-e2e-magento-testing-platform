@@ -1,3 +1,4 @@
+import { readMoney } from '@samjuk/e2e-m2-playwright-core';
 import { hyvaTest as test, expect } from '../fixtures';
 
 test.describe('Simple Product', () => {
@@ -31,6 +32,52 @@ test.describe('Simple Product', () => {
         }),
         'the out-of-stock product never reached the cart',
       ).toHaveCount(0);
+    },
+  );
+});
+
+test.describe('Custom options', () => {
+  test(
+    'a required custom option is asked for before the product can be added',
+    { tag: ['@product', '@options', '@negative'] },
+    async ({ productPage, data }) => {
+      await productPage.expectRequiredOptionBlocksAddToCart(
+        data.slugs.products.customOptionsProduct,
+        data.fixtures.product.customOptions.requiredOptionTitle,
+      );
+    },
+  );
+
+  test(
+    "an optional custom option's price reaches the cart",
+    { tag: ['@product', '@options', '@cart'] },
+    async ({ productPage, cartPage, data }) => {
+      // A PDP round-trip and a cart read.
+      test.slow();
+
+      const o = data.fixtures.product.customOptions;
+
+      await productPage.addProductWithOptionsToCart(data.slugs.products.customOptionsProduct, {
+        [o.requiredOptionTitle]: 'ABC',
+        [o.optionalOptionTitle]: 'Happy birthday',
+      });
+
+      await cartPage.open();
+
+      // The option's surcharge has to be IN the line, not merely rendered
+      // beside it. A store that displays the option and prices it at the base
+      // product undercharges on every order, silently, until someone
+      // reconciles the takings.
+      const unitPrice = await readMoney(
+        cartPage.getUnitPrice(o.title),
+        'cart line unit price',
+      );
+      expect(
+        unitPrice,
+        `the line is priced at the product plus the ${o.optionalOptionTitle} option`,
+      ).toBeCloseTo(o.price + o.optionalOptionPrice, 2);
+
+      await cartPage.expectTotalsAreCoherent(o.title);
     },
   );
 });
