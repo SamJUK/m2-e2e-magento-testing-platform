@@ -4,6 +4,7 @@ import { dumpDatabase } from './db/dump';
 import { markDumpTaken } from './db/run-state';
 import { downloadAndImportFromS3 } from './db/s3';
 import { assertNotDirtyRun, markDirtyRun } from './db/dirty-guard';
+import { assertStrategyHooksConfigured } from './db/strategy-hooks';
 import { assertSearchEngineReachable } from './health/search-engine';
 import { hasPendingConfigSnapshot, restoreConfigSnapshot } from './seed/config-snapshot';
 import { usesConfigSnapshot } from './seed/magento';
@@ -28,6 +29,9 @@ export async function runGlobalSetup(config: ProjectConfig): Promise<void> {
   await assertSearchEngineReachable(config);
 
   const strategy = config.db?.strategy ?? 'none';
+
+  // Before the dump: a strategy with no hooks behind it does nothing, quietly.
+  assertStrategyHooksConfigured(config);
 
   if (strategy === 'dump-restore') {
     // Order matters: guard → dump → mark. The dump is taken before the flag
