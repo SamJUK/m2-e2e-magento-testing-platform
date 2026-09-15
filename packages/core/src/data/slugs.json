@@ -25,6 +25,7 @@
     "outOfStockProduct": "/e2e-out-of-stock.html",
     "adminEditableProductComment": "PDP of the product the admin edit-and-save test renames. Must match fixtures.product.adminEditable.urlKey plus the store's catalog/seo/product_url_suffix. Renaming a product does not regenerate its URL key, so this stays valid while the test holds the temporary name.",
     "adminEditableProduct": "/e2e-admin-edit.html",
+    "customOptionsProduct": "/e2e-custom-options.html",
     "virtualProductComment": "PDP of the virtual product the seed creates. Must match fixtures.product.virtual.urlKey plus the store's catalog/seo/product_url_suffix.",
     "virtualProduct": "/e2e-virtual.html",
     "bundleProductComment": "PDP of the bundle the seed creates. Must match fixtures.product.bundle.urlKey plus the store's catalog/seo/product_url_suffix.",
@@ -35,7 +36,11 @@
   "categories": {
     "listingPage": "/women/tops-women/jackets-women.html",
     "pagedListingPageComment": "A category listing with MORE visible products than `inputs.category.listingPage.resultsPerPage`, so the limiter can actually reach that tile count and the pager has a second page to go to. `listingPage` above is deliberately a small category (it exists to be filtered), which is why these two are separate slugs.",
-    "pagedListingPage": "/women/tops-women.html"
+    "pagedListingPage": "/women/tops-women.html",
+    "parentListingPageComment": "An ANCHOR category that has children, used to prove Magento rolls a child's products up into its parent. Defaults to the same category as pagedListingPage because the stock sample data's `Tops` is both, but they are separate keys: a store whose paged category happens to be a leaf still needs somewhere to point this.",
+    "parentListingPage": "/women/tops-women.html",
+    "childOfParentListingPageComment": "A category that is a CHILD of parentListingPage. Its products must all appear in the parent's listing.",
+    "childOfParentListingPage": "/women/tops-women/jackets-women.html"
   },
   "guestOrderLookupComment": "Orders and Returns. The only route a guest has to an order they placed without an account.",
   "guestOrderLookup": "/sales/guest/form/",
@@ -69,6 +74,12 @@
     "reviews": {
       "gridComment": "Marketing > Reviews. Deliberately the ALL-reviews grid rather than /review/product/pending/: the pending grid would make 'the review is awaiting moderation' true by construction, while filtering the full grid and reading the Status column back proves it.",
       "grid": "/review/product/index/"
+    },
+    "permissions": {
+      "newRole": "/admin/user_role/editrole/",
+      "rolesGrid": "/admin/user_role/",
+      "newUser": "/admin/user/new/",
+      "usersGrid": "/admin/user/"
     },
     "orders": {
       "grid": "/sales/order/",

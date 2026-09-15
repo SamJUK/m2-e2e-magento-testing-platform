@@ -4,6 +4,17 @@
   "validation": {
     "requiredFieldText": "This is a required field."
   },
+  "securityComment": "Store-visible copy for the framework's own refusals, rather than for any one feature.",
+  "security": {
+    "invalidFormKeyText": "Invalid Form Key. Please refresh the page."
+  },
+
+  "cookieRestrictionComment": "Only read when features.security.cookieRestriction is true. Magento renders this notice from Magento_Cookie's 'notices' block.",
+  "cookieRestriction": {
+    "noticeText": "We use cookies to make your experience better.",
+    "acceptButtonLabel": "Allow Cookies"
+  },
+
   "notFound": {
     "headingText": "Whoops, our bad..."
   },
@@ -34,7 +45,9 @@
     },
     "editAccountComment": "Magento words the confirmation the same for a profile save and for a password change. Separate keys so a store can retranslate one without the other.",
     "editAccount": {
-      "notificationText": "You saved the account information."
+      "notificationText": "You saved the account information.",
+      "wrongCurrentPasswordComment": "Magento's refusal when the current password given on the account-edit form does not match. The same message covers a blank one, because AccountManagement treats both as a failed authentication.",
+      "wrongCurrentPasswordText": "The password doesn't match this account."
     },
     "newsletter": {
       "subscribedText": "We have saved your subscription.",
@@ -47,7 +60,9 @@
       }
     },
     "resetPassword": {
-      "notificationText": "You updated your password."
+      "notificationText": "You updated your password.",
+      "expiredLinkComment": "Magento's wording when a createPassword token no longer validates. It is the SAME message for a token that has already been spent and one that has aged out, because Customer\\Controller\\Account\\CreatePassword cannot tell them apart - both are simply 'not the token on the customer row'.",
+      "expiredLinkText": "Your password reset link has expired."
     },
     "logout": {
       "notificationText": "You are signed out"
@@ -87,6 +102,16 @@
     "secondaryProductTitle": "Fusion Backpack",
     "inStockStatusText": "In stock",
     "adminEditableComment": "A product that exists purely so the admin edit-and-save test has something safe to rename. It must be a product NO other test asserts on: the rename is briefly visible store-wide, so pointing this at a shared SKU (the simple product, or the out-of-stock one) would race any suite running at more than one worker. The seed creates it and rewrites `title` and `price` on every run (see seed/fixture-entities.ts), which is also what repairs the product if a run is killed between the rename and the restore. A store that would rather donate an existing throwaway SKU can re-point these and set `seed.createFixtureEntities: false`.",
+    "customOptionsComment": "A seeded product carrying two custom options: a REQUIRED text field and an OPTIONAL one with a fixed price. Both are text fields rather than drop-downs so the test types a known value instead of picking from a list whose order the store controls. The seed replaces these options on every run.",
+    "customOptions": {
+      "sku": "e2e-custom-options",
+      "urlKey": "e2e-custom-options",
+      "title": "E2E Custom Options Product",
+      "price": 30,
+      "requiredOptionTitle": "Engraving",
+      "optionalOptionTitle": "Gift Message",
+      "optionalOptionPrice": 5
+    },
     "adminEditable": {
       "sku": "e2e-admin-edit",
       "urlKey": "e2e-admin-edit",
@@ -198,6 +223,12 @@
         "none": "No Coupon",
         "specific": "Specific Coupon"
       }
+    },
+    "permissions": {
+      "roleSavedText": "You saved the role.",
+      "userSavedText": "You saved the user.",
+      "accessDeniedComment": "What the admin renders in place of a page the signed-in role has no resource for. Magento words it the same on every restricted route.",
+      "accessDeniedText": "Sorry, you need permissions to view this content."
     },
     "cache": {
       "headingText": "Cache Management"
