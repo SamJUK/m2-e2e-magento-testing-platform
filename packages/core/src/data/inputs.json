@@ -14,11 +14,24 @@
       "password": "NotThePassword1!"
     },
     "lockoutFailuresComment": "How many failed sign-ins the store tolerates before it locks the account. Magento's own default is 10 (Magento_Customer etc/config.xml, customer/password/lockout_failures), inside a 10 minute window. Only read when features.security.customerLockout is true.",
-    "lockoutFailures": 10
+    "lockoutFailures": 10,
+    "registerComment": "Extra registration fields this store makes required (Stores > Configuration > Customers > Customer Configuration > Name and Address Options, or any required custom customer attribute). Keyed by the field's visible label, valued with the option or text to enter. Vanilla Magento requires none, so the default is empty.",
+    "register": {
+      "additionalFields": {}
+    }
   },
   "product": {
     "custom_quantity": 2,
-    "configurableProductOptions": [["Size", "M"], ["Color", "Purple"]]
+    "configurableProductOptions": [
+      [
+        "Size",
+        "M"
+      ],
+      [
+        "Color",
+        "Purple"
+      ]
+    ]
   },
   "category": {
     "listingPage": {
@@ -54,5 +67,9 @@
         "country": "United Kingdom"
       }
     }
+  },
+  "tax": {
+    "rateComment": "Tax rate applied to the seeded fixtures, as a fraction (0.2 for 20% VAT). Only read when features.catalog.pricesDisplayIncludeTax is true.",
+    "rate": 0
   }
 }

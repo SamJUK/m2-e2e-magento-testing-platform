@@ -1,42 +1,37 @@
 {
   "_comment": "Store capability declarations. A store opts in or out of a CORE Magento feature here; the suite then requires that feature to behave, rather than skipping it when absent. Override per project in config/features.json (themes may set their own defaults). Functionality added by a MODULE does not belong here - ship its tests with the module (project tests/, app/code <V>/<M>/Test/E2E/, or a composer/npm package).",
-
   "checkout": {
     "agreementsComment": "Store requires Terms & Conditions at checkout (Stores > Configuration > Sales > Checkout > Enable Terms and Conditions). true: the suite requires at least one agreement checkbox, ticks every one and asserts each ends up checked. false: it asserts none is rendered - a store that silently gains a required agreement then fails here instead of hanging on a Place Order button that never submits. Magento's own default is off.",
     "agreements": false,
-
     "paymentMethodSelectionComment": "Store renders a selectable payment method list. true: the suite requires the configured method's input to be rendered and to end up checked (it clicks via the DOM, because the input is usually visually replaced by a styled label). false: the store forces a single method - the suite asserts exactly one payment[method] input exists and is already selected, so gaining a second (unselected) method fails loudly rather than hanging.",
     "paymentMethodSelection": true,
-
     "taxRowComment": "How the checkout Order Summary accounts for tax, so the totals arithmetic is checked rather than fudged. \"absent\": no tax row is rendered at all and subtotal + shipping = order total. This is Magento's own behaviour when no tax rule matches the order's address, and it is what both stock demo stores do. \"additive\": a tax row is rendered and its amount is ADDED to the displayed subtotal and shipping to reach the order total - the usual shape of a store that displays prices excluding tax. \"included\": a tax row is rendered for information only, its amount already inside the displayed subtotal and shipping, so the order total is still subtotal + shipping. Every branch asserts in both directions - \"absent\" requires the row to be genuinely missing, the other two require it to be present and readable - so a store that silently stops charging tax fails here instead of quietly balancing without it.",
     "taxRow": "absent"
   },
-
   "security": {
     "cookieRestrictionComment": "Store runs with Cookie Restriction Mode on (Stores > Configuration > General > Web > Default Cookie Settings). true: the suite requires the notice to render on a first visit and requires accepting it to persist across a reload. false: it asserts no such notice is rendered, so a store that later switches it on fails here rather than having every subsequent test silently fight an overlay it does not know about. Magento's own default is off.",
     "cookieRestriction": false,
-
     "customerLockoutComment": "Store locks a customer account after repeated failed sign-ins (Stores > Configuration > Customers > Customer Configuration > Password Options > Maximum Login Failures to Lockout Account). true: the suite requires the CORRECT password to be refused once the threshold in inputs.account.login.lockoutFailures is passed. false: it requires the correct password to still work, so a store that later turns lockout on fails here rather than having its sign-in tests start flaking for no visible reason. Magento's own default is on, at 10 failures for customers (6 is the admin threshold, a different setting).",
     "customerLockout": true
   },
-
   "cart": {
     "couponFormComment": "Store exposes the 'Apply Discount Code' form on the cart page (Magento renders it whenever at least one cart price rule could apply). true: the suite requires the form and asserts that a valid code discounts the totals, that removing it restores them, and that an unknown code is refused. false: it asserts the coupon field is not rendered at all - a store that later regains one then fails here instead of quietly going untested.",
     "couponForm": true
   },
-
   "wishlist": {
     "removeConfirmationComment": "Removing a wish list item opens Magento's confirm dialog (.action-accept) that must be accepted. true: the suite requires the dialog to appear and accepts it. false: it asserts no dialog appears and the item is removed directly. Stock Magento does NOT confirm on either theme: `Wishlist\\Helper\\Data::getRemoveParams` builds the `data-post-remove` payload without a `confirmation` key, and `mage/dataPost` only raises its modal when that key is present - verified on 2.4.7-p3 and 2.4.8. Left at true this test passed by accident (the first click removed the item, the missing dialog threw, the retry found the wish list already empty), so the assertion never ran. A store whose extension adds a confirmation sets this back to true.",
     "removeConfirmation": false
   },
-
   "review": {
     "formBehindTabComment": "The product review form sits behind a closed disclosure tab (Luma's \"Reviews\" product tab). true: the suite requires that tab to exist and opens it, then requires the form. false: it asserts no such tab is rendered and the form is reachable directly (Hyva has no product tabs). Declared rather than sniffed, so a theme that loses its tab fails loudly instead of silently taking the other path.",
     "formBehindTab": true
   },
-
   "minicart": {
     "removeConfirmationComment": "Removing a minicart line opens Magento's confirm dialog (.action-accept) that must be accepted. true: the suite requires the dialog to appear and accepts it. false: it asserts no dialog appears and the line is removed directly. Luma's stock minicart confirms; Hyva's cart drawer deletes directly, so the Hyva theme layer defaults this to false. Overridable per store.",
     "removeConfirmation": true
+  },
+  "catalog": {
+    "pricesDisplayIncludeTaxComment": "Store displays catalogue prices including tax (Stores > Configuration > Sales > Tax > Price Display Settings). Seeded fixture prices are what the seed writes to the catalogue, which Magento holds excluding tax, so the assertions that compare a displayed amount with a fixture figure scale it by inputs.tax.rate when this is true. Magento's own default is excluding.",
+    "pricesDisplayIncludeTax": false
   }
 }
