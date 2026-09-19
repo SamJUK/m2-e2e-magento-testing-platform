@@ -1,0 +1,57 @@
+name: E2E PR Command Help
+
+on:
+  pull_request:
+    types: [opened]
+    branches:
+      - master
+      - main
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Post /e2e instructions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment with instructions
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        with:
+          script: |
+            const body = [
+              '### 🧪 On-demand E2E run',
+              '',
+              'Comment `/e2e <targets> <tags>` (repo owner only) to run the suite against this PR.',
+              '',
+              '<details>',
+              '<summary>Usage</summary>',
+              '',
+              '```',
+              '/e2e',
+              '/e2e all',
+              '/e2e hyva',
+              '/e2e luma hyva @checkout',
+              '/e2e @cart @customer',
+              '```',
+              '',
+              'Rules:',
+              '- Tokens can be given in any order.',
+              '- Targets are `luma`, `hyva`, `mageos`, or `all`.',
+              '- Anything starting with `@` is a Playwright tag filter. Several are OR-ed, so `@cart @customer` becomes `@cart|@customer`.',
+              '- Omitting the target runs `luma` alone — one target, and the one that needs no credentials.',
+              '',
+              'Notes:',
+              '- The run is resolved from the **base** branch, not the PR head. That is what makes the owner gate meaningful, and it means a PR changing `e2e.yml` itself cannot exercise that change here — dispatch it from `master` after merge.',
+              '- `issue_comment` runs do not attach to the PR head, so the result is mirrored onto the head SHA as the `e2e on demand (/e2e)` commit status.',
+              '- `CI` (build, typecheck, theme parity and the repo checks) runs automatically on every PR. E2E is on demand only, so a push does not pay for a Magento stack.',
+              '- Actions → **E2E** → Run workflow does the same thing with form inputs.',
+              '</details>',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body,
+            });
