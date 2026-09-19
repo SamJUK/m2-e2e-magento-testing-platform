@@ -242,9 +242,10 @@ export async function runSeed(config: ProjectConfig): Promise<void> {
     // while the source item shows thousands in stock. Has to run after the
     // fixture products exist, which is why it is here and not in the command
     // list above. Sub-second on a demo catalogue, once per run.
-    await config.shell.exec(
-      'php bin/magento indexer:reindex cataloginventory_stock inventory || true',
-    );
+    // Separate invocations: a store with MSI disabled has no `inventory`
+    // indexer, and one bad name makes Magento reject the whole list.
+    await config.shell.exec('php bin/magento indexer:reindex cataloginventory_stock || true');
+    await config.shell.exec('php bin/magento indexer:reindex inventory || true');
 
     // The new product is only reachable once the full page cache lets go of
     // the 404 it may already have stored for its URL.

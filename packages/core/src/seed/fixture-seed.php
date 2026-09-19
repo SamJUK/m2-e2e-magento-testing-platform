@@ -102,7 +102,60 @@ $msiEnabled = $om->get(\Magento\Framework\Module\Manager::class)->isEnabled('Mag
  * between the rename and the restore would otherwise leave the store holding
  * the temporary name for good.
  */
-$upsertProduct = function (array $spec, bool $inStock) use ($om, $productRepository, $stockRegistry, $websiteIds, $msiEnabled) {
+// The ONE source a fixture has to carry stock on to be salable.
+//
+// 'default' is enough on a single-source store and useless on a multi-source
+// one: the website resolves to its own stock, that stock links to its own
+// sources, and stock on an unlinked source reads "Out of stock" with no hint
+// as to why. Exactly one, not all of them - Magento refuses bundle selections
+// spread across several sources when Ship Bundle Items Together is set.
+$salableSourceCode = static function () use ($om, $msiEnabled): string {
+    if (!$msiEnabled) {
+        return 'default';
+    }
+    $resource = $om->get(\Magento\Framework\App\ResourceConnection::class);
+    $connection = $resource->getConnection();
+    $channelTable = $resource->getTableName('inventory_stock_sales_channel');
+    $linkTable = $resource->getTableName('inventory_source_stock_link');
+    if (!$connection->isTableExists($channelTable) || !$connection->isTableExists($linkTable)) {
+        return 'default';
+    }
+
+    try {
+        $websiteCode = $om->get(\Magento\Store\Model\StoreManagerInterface::class)
+            ->getDefaultStoreView()
+            ->getWebsite()
+            ->getCode();
+    } catch (\Throwable $e) {
+        return 'default';
+    }
+
+    $stockId = (int) $connection->fetchOne(
+        $connection->select()
+            ->from($channelTable, 'stock_id')
+            ->where('type = ?', 'website')
+            ->where('code = ?', $websiteCode)
+    );
+    // Stock 1 is Magento's Default Stock, which implicitly sells from 'default'
+    // and carries no source links of its own.
+    if ($stockId <= 1) {
+        return 'default';
+    }
+
+    $code = (string) $connection->fetchOne(
+        $connection->select()
+            ->from($linkTable, 'source_code')
+            ->where('stock_id = ?', $stockId)
+            ->order('priority ASC')
+            ->limit(1)
+    );
+
+    return $code !== '' ? $code : 'default';
+};
+
+$extraAttributes = is_array($cfg['productAttributes'] ?? null) ? $cfg['productAttributes'] : [];
+
+$upsertProduct = function (array $spec, bool $inStock) use ($om, $productRepository, $stockRegistry, $websiteIds, $msiEnabled, $salableSourceCode, $extraAttributes) {
     $sku = $spec['sku'];
     $qty = $inStock ? 1000 : 0;
     $type = $spec['type'] ?? \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE;
@@ -130,6 +183,12 @@ $upsertProduct = function (array $spec, bool $inStock) use ($om, $productReposit
             'is_in_stock' => $inStock ? 1 : 0,
             'qty' => $qty,
         ]);
+
+    // Whatever this store makes required beyond the core fields above.
+    foreach ($extraAttributes as $code => $value) {
+        $product->setData((string) $code, $value);
+    }
+
     $product = $productRepository->save($product);
 
     // Drop any STORE-SCOPED override of the attributes written above, so the
@@ -256,12 +315,27 @@ $upsertProduct = function (array $spec, bool $inStock) use ($om, $productReposit
     // above only reaches them through a sync a bare qty update can miss, so
     // write the default source directly where MSI is installed.
     if ($msiEnabled) {
+        $sourceCode = $salableSourceCode();
         $sourceItem = $om->get(\Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory::class)->create();
-        $sourceItem->setSourceCode('default');
+        $sourceItem->setSourceCode($sourceCode);
         $sourceItem->setSku($sku);
         $sourceItem->setQuantity($qty);
         $sourceItem->setStatus($inStock ? 1 : 0);
         $om->get(\Magento\InventoryApi\Api\SourceItemsSaveInterface::class)->execute([$sourceItem]);
+
+        // Drop the 'default' row the legacy stock sync writes during save.
+        // Leaving it makes the fixture multi-source, and Magento then refuses
+        // to add it to a bundle whose items ship together.
+        if ($sourceCode !== 'default') {
+            $resourceForSource = $om->get(\Magento\Framework\App\ResourceConnection::class);
+            $sourceItemTable = $resourceForSource->getTableName('inventory_source_item');
+            if ($resourceForSource->getConnection()->isTableExists($sourceItemTable)) {
+                $resourceForSource->getConnection()->delete($sourceItemTable, [
+                    'sku = ?' => $sku,
+                    'source_code = ?' => 'default',
+                ]);
+            }
+        }
     }
 
     return $product;
@@ -307,7 +381,7 @@ if (!empty($cfg['mayRestock'])) {
 
         if ($msiEnabled) {
             $sourceItem = $om->get(\Magento\InventoryApi\Api\Data\SourceItemInterfaceFactory::class)->create();
-            $sourceItem->setSourceCode('default');
+            $sourceItem->setSourceCode($salableSourceCode());
             $sourceItem->setSku($orderedSku);
             $sourceItem->setQuantity($restockQty);
             $sourceItem->setStatus(1);
@@ -542,6 +616,10 @@ $bundle->setSku($bundleSku)
         'is_in_stock' => 1,
         'qty' => 1000,
     ]);
+
+foreach ($extraAttributes as $code => $value) {
+    $bundle->setData((string) $code, $value);
+}
 
 $option = $om->get(\Magento\Bundle\Api\Data\OptionInterfaceFactory::class)->create();
 $option->setTitle($bundleCfg['optionTitle'] ?? 'E2E Bundle Choice');
