@@ -217,6 +217,10 @@ test.describe('Admin > Catalog > URL rewrites', () => {
 
       const product = data.fixtures.product.adminEditable;
       const newUrlKey = `${product.urlKey}-${faker.string.alphanumeric(8).toLowerCase()}`;
+      // Stores set catalog/seo/product_url_suffix to anything, empty included.
+      const suffix = data.slugs.products.adminEditableProduct.slice(
+        `/${product.urlKey}`.length,
+      );
 
       await adminLoginPage.login();
 
@@ -225,6 +229,7 @@ test.describe('Admin > Catalog > URL rewrites', () => {
         product.title,
         newUrlKey,
         data.slugs.products.adminEditableProduct,
+        suffix,
       );
 
       // Put the url key back, so this can run again on a store whose database
@@ -234,7 +239,8 @@ test.describe('Admin > Catalog > URL rewrites', () => {
         product.sku,
         product.title,
         product.urlKey,
-        `/${newUrlKey}.html`,
+        `/${newUrlKey}${suffix}`,
+        suffix,
       );
     },
   );

@@ -59,7 +59,11 @@ export class AdminOrderPage implements IAdminOrderPage {
   private async createDocument(
     orderNumber: string,
     toolbarButtonLabel: string,
-    form: { emailCopyCheckboxLabel: string; submitButtonLabel: string },
+    form: {
+      emailCopyCheckboxLabel: string;
+      submitButtonLabel: string;
+      sourceSelectionProceedLabel?: string;
+    },
     createdNotificationText: string,
   ): Promise<void> {
     await this.openOrder(orderNumber);
@@ -71,9 +75,19 @@ export class AdminOrderPage implements IAdminOrderPage {
     // retried until they demonstrably did something, rather than waited on
     // once and blamed on the form.
     const emailCopy = this.page.getByLabel(form.emailCopyCheckboxLabel);
+    // An MSI store with more than one source puts a Source Selection screen
+    // between Ship and the shipment form, so the toolbar click alone never
+    // reaches the email checkbox.
+    const proceed = form.sourceSelectionProceedLabel
+      ? this.page.getByRole('button', { name: form.sourceSelectionProceedLabel, exact: true })
+      : null;
     await expect(async () => {
       if (!(await emailCopy.isVisible())) {
-        await this.page.getByRole('button', { name: toolbarButtonLabel, exact: true }).click();
+        if (proceed && (await proceed.isVisible())) {
+          await proceed.click();
+        } else {
+          await this.page.getByRole('button', { name: toolbarButtonLabel, exact: true }).click();
+        }
       }
       await expect(
         emailCopy,

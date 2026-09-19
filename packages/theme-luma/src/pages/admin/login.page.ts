@@ -22,7 +22,9 @@ export class AdminLoginPage implements IAdminLoginPage {
     await this.passwordField.fill(process.env.PLAYWRIGHT_ADMIN_PASSWORD ?? 'Password1');
     await this.submitButton.click();
     await this.page.waitForLoadState('domcontentloaded');
-    await expect(this.page.getByRole('menubar')).toBeVisible();
+    // The dashboard the login redirects to renders several ajax widgets before
+    // the menu settles, which outruns the default expect budget on a dev store.
+    await expect(this.page.getByRole('menubar')).toBeVisible({ timeout: 45_000 });
   }
 
   async fillOutForm(username: string, password: string): Promise<void> {
