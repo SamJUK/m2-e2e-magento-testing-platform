@@ -1,4 +1,4 @@
-import { readMoney } from '@samjuk/e2e-m2-playwright-core';
+import { displayedPrice, readMoney } from '@samjuk/e2e-m2-playwright-core';
 import { hyvaTest as test, expect } from '../fixtures';
 
 test.describe('Simple Product', () => {
@@ -75,7 +75,7 @@ test.describe('Custom options', () => {
       expect(
         unitPrice,
         `the line is priced at the product plus the ${o.optionalOptionTitle} option`,
-      ).toBeCloseTo(o.price + o.optionalOptionPrice, 2);
+      ).toBeCloseTo(displayedPrice(o.price + o.optionalOptionPrice, data), 2);
 
       await cartPage.expectTotalsAreCoherent(o.title);
     },

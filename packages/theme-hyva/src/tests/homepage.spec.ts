@@ -28,9 +28,14 @@ test.describe('Homepage', () => {
       // Hyvä's newsletter block lives in the footer: an sr-only label plus a
       // Subscribe button, both scoped to form.subscribe so the header login
       // drawer's "Email Address" label can't win the match.
-      const newsletterForm = page.locator(data.selectors.newsletter.formSelector);
+      // Themes commonly render the footer form twice (desktop and mobile) with
+      // the same id, so take the one a customer can actually type into.
+      const newsletterForm = page
+        .locator(data.selectors.newsletter.formSelector)
+        .filter({ visible: true })
+        .first();
       await newsletterForm
-        .getByLabel(data.selectors.newsletter.emailFieldLabel, { exact: true })
+        .getByRole('textbox', { name: data.selectors.newsletter.emailFieldLabel, exact: true })
         .fill(email);
       await newsletterForm
         .getByRole('button', { name: data.selectors.newsletter.subscribeButtonLabel })

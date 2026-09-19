@@ -1,4 +1,4 @@
-import { readMoney } from '@samjuk/e2e-m2-playwright-core';
+import { displayedPrice, readMoney } from '@samjuk/e2e-m2-playwright-core';
 import { hyvaTest as test, expect } from '../fixtures';
 
 test.describe('Bundle Product', () => {
@@ -27,13 +27,13 @@ test.describe('Bundle Product', () => {
       // arithmetic rather than "the price changed" is what makes this fail on a
       // theme that recalculates from the wrong base.
       await productPage.expectBundlePrice(
-        b.basePrice + b.defaultSelection.price,
+        displayedPrice(b.basePrice + b.defaultSelection.price, data),
         `the bundle opens priced at its base plus "${b.defaultSelection.title}"`,
       );
 
       await productPage.selectBundleOption(b.alternateSelection.title);
       await productPage.expectBundlePrice(
-        b.basePrice + b.alternateSelection.price,
+        displayedPrice(b.basePrice + b.alternateSelection.price, data),
         `choosing "${b.alternateSelection.title}" reprices the bundle to base plus that option`,
       );
     },
@@ -70,7 +70,7 @@ test.describe('Bundle Product', () => {
       expect(
         unitPrice,
         'the cart charges the bundle base price plus the chosen selection',
-      ).toBeCloseTo(b.basePrice + b.alternateSelection.price, 2);
+      ).toBeCloseTo(displayedPrice(b.basePrice + b.alternateSelection.price, data), 2);
       await cartPage.expectTotalsAreCoherent(b.title);
     },
   );
