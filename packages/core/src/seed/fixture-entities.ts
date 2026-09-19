@@ -45,6 +45,7 @@ export async function seedFixtureEntities(config: ProjectConfig): Promise<void> 
   const payload = Buffer.from(
     JSON.stringify({
       mayRestock,
+      productAttributes: config.seed?.productAttributes ?? {},
       orderedSkus: fixtures.product.orderedSkus,
       coupon: {
         ruleName: fixtures.cart.coupon.ruleName,
