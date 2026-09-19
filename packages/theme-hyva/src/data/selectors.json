@@ -36,7 +36,7 @@
     "unitPriceSelector": ".price-box > span:nth-last-child(2) .price",
     "lineTotalSelector": ".price-box > span:last-child .price",
     "subtotalSelector": "#cart-totals div:has(> div:text-is(\"Subtotal\")) > div.justify-self-end",
-    "discountBasisSubtotalSelectorComment": "Hyva renders one subtotal row, so the discount is measured against the same node as subtotalSelector. Core's default is Luma-shaped (tr.totals.sub...), which matches nothing here \u2014 this override is required, not cosmetic.",
+    "discountBasisSubtotalSelectorComment": "Hyva renders one subtotal row, so the discount is measured against the same node as subtotalSelector. Core's default is Luma-shaped (tr.totals.sub...), which matches nothing here — this override is required, not cosmetic.",
     "discountBasisSubtotalSelector": "#cart-totals div:has(> div:text-is(\"Subtotal\")) > div.justify-self-end",
     "grandTotalSelector": "#cart-totals div:has(> div:text-is(\"Grand Total\")) > div.justify-self-end",
     "couponFormToggle": "details.coupon-form summary",
@@ -74,7 +74,7 @@
       "layeredNavigation": "#filters-content",
       "filterGroupSelector": "details.filter-option",
       "filterGroupTitleSelector": "summary.filter-options-title",
-    "appliedFiltersDisclosureTitleSelector": "details.filter-current > summary"
+      "appliedFiltersDisclosureTitleSelector": "details.filter-current > summary"
     }
   },
   "currencySwitcher": {

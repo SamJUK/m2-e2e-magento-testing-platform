@@ -1,7 +1,6 @@
 {
   "header": {
-    "links": {
-    }
+    "links": {}
   },
   "validationComment": "Where a theme renders the per-field rejection message produced by its form validator. Luma uses jQuery validation (`div.mage-error`); Hyva's own validator appends `<li>` entries to a `ul.messages` inside the field wrapper, so the Hyva layer overrides this.",
   "validation": {
@@ -12,7 +11,7 @@
     "nameFieldLabel": "Name",
     "emailFieldLabel": "Email",
     "telephoneFieldLabel": "Phone Number",
-    "messageFieldLabel": "What\u2019s on your mind?",
+    "messageFieldLabel": "What’s on your mind?",
     "submitButtonLabel": "Submit"
   },
   "registerPage": {
@@ -114,6 +113,8 @@
   "productPage": {
     "quantityFieldLabelComment": "The PDP quantity input's own <label>. Stock Magento (and so Luma) words it \"Qty\"; Hyva labels the same input \"Quantity\" in an sr-only span, which is why the Hyva layer overrides this. Matched exactly and scoped to the add-to-cart form, so a related-product tile's own qty control cannot win it.",
     "quantityFieldLabel": "Qty",
+    "quantityFieldSelectorComment": "Fallback for themes that drop the <label> and name the input with `title` instead, which getByLabel does not read. Scoped to the add-to-cart form by the page object, so a related-product tile's own qty control cannot win it.",
+    "quantityFieldSelector": "input[name=\"qty\"]",
     "addToCartButtonLabel": "Add to Cart",
     "titleSelectorComment": "The PDP heading carrying the product name, used to prove an admin product edit reached the storefront. Both stock themes tag it with Magento's own `data-ui-id` - Luma on a `<span class=\"base\">` inside the `<h1>`, Hyva on the `<h1>` itself - so the two-branch selector resolves to exactly ONE element on either. Restricting both branches to the heading is load-bearing on Hyva: it renders the title a SECOND time as an `aria-hidden` `<div>` carrying the same `data-ui-id` (the `<h1>` is `md:sr-only`, the div is the visible desktop copy), so a bare attribute match finds two. Read with toHaveText/textContent rather than toBeVisible, because the `<h1>` branch is the screen-reader-only one.",
     "titleSelector": "h1[data-ui-id=\"page-title-wrapper\"], h1 [data-ui-id=\"page-title-wrapper\"]",
@@ -179,13 +180,13 @@
       "pagerSelector": ".pages",
       "pageLinkSelector": "a[href*=\"p=%s\"]",
       "toolbarAmountSelectorComment": "The toolbar's result count. Magento renders it as either \"12 Items\" or \"Items 1-9 of 12\" depending on whether the listing paginates, so the LAST integer in it is the total either way.",
-    "toolbarAmountSelector": ".toolbar-amount",
-    "layeredNavigation": "[id=\"layered-filter-block\"]",
+      "toolbarAmountSelector": ".toolbar-amount",
+      "layeredNavigation": "[id=\"layered-filter-block\"]",
       "appliedFilterItem": ".filter-current .item",
       "appliedFilterLabel": ".filter-label",
       "appliedFilterValue": ".filter-value",
-    "clearAllFiltersSelectorComment": "The layered navigation's clear-all control. Both stock themes render Magento's own `.filter-actions` block with a single link in it, so this is addressed structurally rather than by its \"Clear All\" wording, which translation changes.",
-    "clearAllFiltersSelector": ".filter-actions a"
+      "clearAllFiltersSelectorComment": "The layered navigation's clear-all control. Both stock themes render Magento's own `.filter-actions` block with a single link in it, so this is addressed structurally rather than by its \"Clear All\" wording, which translation changes.",
+      "clearAllFiltersSelector": ".filter-actions a"
     }
   },
   "cart": {
@@ -200,15 +201,15 @@
     "unitPriceSelector": "td.col.price .price",
     "lineTotalSelector": "td.col.subtotal .price",
     "subtotalSelectorComment": "A store set to display prices both excl. and incl. tax renders TWO subtotal rows (tr.totals.sub.excl and tr.totals.sub.incl); a bare tr.totals.sub matches both and reads the excl. one, which then never equals the tax-inclusive line total. Pin to the incl. row, falling back to the single unqualified row when the store displays only one.",
-  "subtotalSelector": "#cart-totals tr.totals.sub.incl td.amount .price, #cart-totals tr.totals.sub:not(.excl):not(.incl) td.amount .price",
+    "subtotalSelector": "#cart-totals tr.totals.sub.incl td.amount .price, #cart-totals tr.totals.sub:not(.excl):not(.incl) td.amount .price",
     "grandTotalSelector": "#cart-totals tr.grand.totals td.amount .price",
     "couponFormToggleComment": "Magento collapses the coupon form behind a disclosure on both themes (Luma: a collapsible block title, Hyva: a <details> summary). The page object clicks this until the code field is actually visible.",
     "couponFormToggle": "#block-discount .title",
     "couponFormSelector": "#discount-coupon-form",
     "couponFieldSelector": "#coupon_code",
     "discountBasisSubtotalSelectorComment": "The subtotal the DISCOUNT is calculated from. Normally identical to subtotalSelector, and it defaults to the same value. It exists because a store showing both inc- and exc-VAT prices can render line totals on one basis while Magento computes the coupon discount on the other: one client store displays exc-VAT line totals (so subtotalSelector must point at the exc row for the line-total coherence check) while its discount is a percentage of the inc-VAT subtotal. Pointing the coupon arithmetic here keeps each assertion comparing like with like instead of silently mixing tax bases.",
-  "discountBasisSubtotalSelector": "#cart-totals tr.totals.sub.incl td.amount .price, #cart-totals tr.totals.sub:not(.excl):not(.incl) td.amount .price",
-  "applyCouponButtonLabel": "Apply Discount",
+    "discountBasisSubtotalSelector": "#cart-totals tr.totals.sub.incl td.amount .price, #cart-totals tr.totals.sub:not(.excl):not(.incl) td.amount .price",
+    "applyCouponButtonLabel": "Apply Discount",
     "cancelCouponButtonLabel": "Cancel Coupon",
     "discountTotalSelectorComment": "The discount totals line. Keyed on the coupon-label span Magento's own template renders inside the row rather than on the word 'Discount', so it survives translation. The row only exists while a discount is actually applied, which is what makes toHaveCount(0) meaningful after the coupon is removed.",
     "discountTotalSelector": "#cart-totals tr.totals:has(span.discount.coupon) td.amount .price"
@@ -238,7 +239,9 @@
       "emailFieldsetSelector": "#customer-email-fieldset",
       "billingAddressFormSelector": ".billing-address-form",
       "billingAddressUpdateButtonSelectorComment": "Resolved from the page, not from inside billingAddressFormSelector: Magento renders this control as a SIBLING of the address form, so scoping it to the form finds nothing. There is exactly one on a virtual checkout.",
-      "billingAddressUpdateButtonSelector": "button.action-update"
+      "billingAddressUpdateButtonSelector": "button.action-update",
+      "billingAddressUpdateButtonLabelComment": "Accessible name of the control that commits the billing address, for checkouts whose markup does not carry billingAddressUpdateButtonSelector's class. Matched as a substring, so 'Update' also finds 'Update Address'.",
+      "billingAddressUpdateButtonLabel": "Update"
     },
     "shipping": {
       "methodFieldLabel": "Fixed",
@@ -332,6 +335,7 @@
     "permissions": {
       "roleNameFieldLabel": "Role Name",
       "identityPasswordFieldLabel": "Your Password",
+      "roleInfoTabLabel": "Role Info",
       "roleResourcesTabLabel": "Role Resources",
       "resourceAccessFieldLabel": "Resource Access",
       "customResourceAccessOption": "Custom",
@@ -446,13 +450,17 @@
       },
       "shipment": {
         "emailCopyCheckboxLabel": "Email Copy of Shipment",
-        "submitButtonLabel": "Submit Shipment"
+        "submitButtonLabel": "Submit Shipment",
+        "sourceSelectionProceedLabelComment": "On an MSI store with more than one source, Ship opens a Source Selection screen first and the shipment form is only reached through this button. Absent on single-source stores, where the form opens directly.",
+        "sourceSelectionProceedLabel": "Proceed to Shipment"
       }
     }
   },
   "minicart": {
     "itemPriceSelectorComment": "The price on one minicart line, resolved inside that line's own row. Luma wraps it in `.product-item-pricing`; Hyva's cart drawer renders a bare `.price-box`, so the Hyva layer overrides it. Read with readMoney, which takes the first VISIBLE match - dual inc/exc-VAT stores render both variants here.",
     "itemPriceSelector": ".product-item-pricing .price",
+    "itemSelectorComment": "One line in the minicart. Both stock themes mark these up as list items, which is what the page object prefers; this is the fallback for themes that do not.",
+    "itemSelector": "li.product-item, .minicart-items .product-item",
     "viewCartLinkLabel": "View and Edit Cart",
     "checkoutButtonLabel": "Proceed to Checkout",
     "itemCounterSelector": ".action.showcart .counter-number"
@@ -461,7 +469,8 @@
     "searchButtonLabel": "Search",
     "noResultsMessageSelectorComment": "Where the results page reports that nothing matched. Both stock themes render Magento's own `.message.notice` inside the main column, so one selector covers them. Scoped to `.column.main` so a stray header/footer notice cannot satisfy the assertion.",
     "noResultsMessageSelector": ".column.main .message.notice",
-    "resultItemSelectorComment": "Scoped to .products.wrapper, not .products-grid: Magento renders the listing as \"products wrapper grid products-grid\" OR \"products wrapper list products-list\" depending on catalog/frontend/list_mode, and a store defaulting to list view matched nothing at all. Same shape as categoryPage.listingPage.productItemSelector, which already handled both.", "resultItemSelector": ".products.wrapper .product-item",
+    "resultItemSelectorComment": "Scoped to .products.wrapper, not .products-grid: Magento renders the listing as \"products wrapper grid products-grid\" OR \"products wrapper list products-list\" depending on catalog/frontend/list_mode, and a store defaulting to list view matched nothing at all. Same shape as categoryPage.listingPage.productItemSelector, which already handled both.",
+    "resultItemSelector": ".products.wrapper .product-item",
     "resultItemNameSelector": ".product-item-link"
   },
   "newsletterManagePageComment": "The account's own subscription form (`slugs.account.newsletter`). Distinct from the `newsletter` block below, which is the footer sign-up form. Both stock themes keep Magento's own ids here.",
@@ -475,7 +484,6 @@
     "noticeSelector": "#notice-cookie-block",
     "acceptButtonSelector": "#btn-cookie-allow"
   },
-
   "newsletter": {
     "emailFieldLabel": "Sign Up for Our Newsletter",
     "subscribeButtonLabel": "Subscribe"

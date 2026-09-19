@@ -80,6 +80,16 @@ export interface ProjectSeedConfig {
    */
   disableTwoFactorModules?: boolean;
   /**
+   * Attribute values applied to every product the seed creates, as
+   * `{ attribute_code: value }`.
+   *
+   * A store with a REQUIRED user-defined product attribute rejects the seed's
+   * fixtures outright ("The <label> attribute value is empty"), because the
+   * seed only knows about core fields. Declare what those attributes need. A
+   * select expects its option id, not the label.
+   */
+  productAttributes?: Record<string, string | number | boolean>;
+  /**
    * Whether the seed may create the catalogue/promotion fixtures the shared
    * suite asserts on — a percent-off cart price rule with a known coupon code,
    * and a dedicated out-of-stock product. Default true.
