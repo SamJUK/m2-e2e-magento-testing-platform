@@ -128,10 +128,13 @@ export class CartPage implements ICartPage {
 
     expect(quantity, 'cart line quantity is at least one').toBeGreaterThanOrEqual(1);
     expect(unitPrice, 'cart line unit price is greater than zero').toBeGreaterThan(0);
-    expect(lineTotal, `cart line total is the unit price x ${quantity}`).toBeCloseTo(
-      unitPrice * quantity,
-      2,
-    );
+    // A VAT-inclusive store rounds the unit price it displays but computes the
+    // row from the unrounded ex-tax figure, so the two can differ by up to half
+    // a penny per unit.
+    expect(
+      Math.abs(lineTotal - unitPrice * quantity),
+      `cart line total is the unit price x ${quantity}`,
+    ).toBeLessThanOrEqual(0.005 * (quantity + 1));
 
     const lineCount = await this.page.locator(this.data.selectors.cart.cartItemSelector).count();
     if (lineCount === 1) {

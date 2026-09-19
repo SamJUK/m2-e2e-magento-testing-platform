@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { sprintf, waitForFormKey } from '@samjuk/e2e-m2-playwright-core';
+import { sprintf, waitForFormKey, setCheckbox } from '@samjuk/e2e-m2-playwright-core';
 import type { HyvaData } from '../data/types';
 import type { IAddressBookPage, CustomerAddress } from './types';
 
@@ -206,8 +206,8 @@ export class AddressBookPage implements IAddressBookPage {
         'the form offers a default-billing checkbox (the customer already has a default)',
       ).toHaveCount(1, { timeout: 30_000 });
       await expect(shipping, 'the form offers a default-shipping checkbox').toHaveCount(1);
-      await billing.check();
-      await shipping.check();
+      await setCheckbox(billing, true);
+      await setCheckbox(shipping, true);
     }
 
     await this.submitForm();

@@ -26,7 +26,9 @@ export class ProductPage implements IProductPage {
     });
     // The live price. `.first()`: Luma repeats the configured-price box at the
     // top and the bottom of the customisation panel.
-    this.bundleSummaryPrice = page.locator(bundle.summaryPriceSelector).first();
+    // Not narrowed here: readMoney filters to the visible match, and a store
+    // showing both tax bases renders the inc-VAT copy first and hidden.
+    this.bundleSummaryPrice = page.locator(bundle.summaryPriceSelector);
     // Scoped to the main form: related/upsell cards can render their own
     // add-to-cart buttons with the same accessible name.
     // The label can differ per product type on themes that override the
@@ -43,10 +45,11 @@ export class ProductPage implements IProductPage {
     // Scoped to the same form, and matched exactly: Luma labels the control
     // "Qty", which an inexact match would also find on any related-product
     // tile that renders one.
-    this.quantityField = form.getByLabel(
-      data.selectors.productPage.quantityFieldLabel,
-      { exact: true },
-    );
+    this.quantityField = form
+      .getByLabel(data.selectors.productPage.quantityFieldLabel, { exact: true })
+      .or(form.locator(data.selectors.productPage.quantityFieldSelector))
+      .filter({ visible: true })
+      .first();
   }
 
   /**

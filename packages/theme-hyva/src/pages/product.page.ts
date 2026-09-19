@@ -29,7 +29,9 @@ export class ProductPage implements IProductPage {
     });
     // The live price. `.first()`: Luma repeats the configured-price box at the
     // top and the bottom of the customisation panel.
-    this.bundleSummaryPrice = page.locator(bundle.summaryPriceSelector).first();
+    // Not narrowed here: readMoney filters to the visible match, and a store
+    // showing both tax bases renders the inc-VAT copy first and hidden.
+    this.bundleSummaryPrice = page.locator(bundle.summaryPriceSelector);
     // Related/upsell product cards further down the PDP render their own
     // swatches and qty inputs with the same attributes as the main product's
     // (e.g. three `data-option-label="Purple"` on one page). Scoping to the
