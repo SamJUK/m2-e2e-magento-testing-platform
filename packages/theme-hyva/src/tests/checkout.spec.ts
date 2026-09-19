@@ -260,9 +260,9 @@ test.describe('Checkout (Registered)', () => {
       await accountPage.reorder(orderNumber);
 
       await expect(
-        page.getByRole('heading', { name: data.fixtures.product.simpleProductTitle }),
+        cartPage.getProductRow(data.fixtures.product.simpleProductTitle),
         'the reordered product is back in the cart',
-      ).toBeVisible();
+      ).toHaveCount(1);
       // A product name in the cart says nothing about pricing. Reorder rebuilds
       // the quote from the order's items, so assert the money it rebuilt.
       await cartPage.expectTotalsAreCoherent(data.fixtures.product.simpleProductTitle);

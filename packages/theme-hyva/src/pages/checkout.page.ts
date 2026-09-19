@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { sprintf } from '@samjuk/e2e-m2-playwright-core';
+import { clickReachable, sprintf } from '@samjuk/e2e-m2-playwright-core';
 import type { HyvaData } from '../data/types';
 import type { ICheckoutPage, CheckoutAddress, CheckoutOrderData } from './types';
 
@@ -59,9 +59,11 @@ export class CheckoutPage implements ICheckoutPage {
     this.summaryDiscount = page.locator(summary.discountTotalSelector);
 
     const coupon = data.selectors.checkout.coupon;
-    this.couponForm = page.locator(coupon.formSelector);
-    this.couponFormToggle = page.locator(coupon.formToggle);
-    this.couponField = page.locator(coupon.fieldSelector);
+    // Themes that render the discount form in both the sidebar and the payment
+    // step duplicate its ids, so every coupon locator takes the visible copy.
+    this.couponForm = page.locator(coupon.formSelector).filter({ visible: true }).first();
+    this.couponFormToggle = page.locator(coupon.formToggle).filter({ visible: true });
+    this.couponField = page.locator(coupon.fieldSelector).filter({ visible: true }).first();
     // Scoped to the discount form: the payment step also carries the Place
     // Order button and, on many stores, a store-credit form with buttons in
     // range of an unscoped accessible-name match.
@@ -243,6 +245,12 @@ export class CheckoutPage implements ICheckoutPage {
     });
     await guestEmailField.fill(order.email);
     await this.fillNewShippingAddress(order);
+
+    // Choose a rate before emptying the field. A customer reaches this button
+    // with a delivery option picked, and themes whose Next handler checks for
+    // one bail out of it before they ever validate the address.
+    await this.selectShippingRate();
+
     await shippingForm.locator(s.billing.streetAddressFieldSelector).clear();
 
     // Knockout's value binding updates on change, not on input, so the cleared
@@ -303,20 +311,26 @@ export class CheckoutPage implements ICheckoutPage {
     await this.page.waitForURL(/#payment/, { timeout: 60_000 });
     await this.page.locator('#checkout-loader').waitFor({ state: 'hidden', timeout: 60_000 });
 
+    // The bar renders, but not how many steps it holds: a theme is free to add
+    // its own ("Order Complete"), and counting them failed a store whose
+    // virtual checkout correctly offered no shipping step at all. The absence
+    // of shipping is proven by the three assertions below instead.
     await expect(
-      this.page.locator(v.progressStepSelector),
-      'checkout offers a single step, not shipping then payment',
-    ).toHaveCount(1);
+      this.page.locator(v.progressStepSelector).first(),
+      'checkout renders its progress bar',
+    ).toBeVisible();
+    // Counted rather than toBeHidden: themes that render the step markup twice
+    // duplicate its id, and a strict locator refuses to assert on two nodes.
     await expect(
-      this.page.locator(v.shippingStepSelector),
+      this.page.locator(v.shippingStepSelector).filter({ visible: true }),
       'the shipping step is not rendered',
-    ).toBeHidden();
+    ).toHaveCount(0);
     await expect(
-      this.page.locator(v.shippingRatesSelector),
+      this.page.locator(v.shippingRatesSelector).filter({ visible: true }),
       'no shipping rates are offered for a cart with nothing to ship',
     ).toHaveCount(0);
     await expect(
-      this.page.locator(s.summary.shippingSelector),
+      this.page.locator(s.summary.shippingSelector).filter({ visible: true }),
       'the order summary carries no shipping row',
     ).toHaveCount(0);
 
@@ -325,13 +339,31 @@ export class CheckoutPage implements ICheckoutPage {
       .getByLabel(s.billing.emailFieldLabel)
       .fill(order.email);
 
-    const billingForm = this.page.locator(v.billingAddressFormSelector);
+    // Payment first, which is the order a customer does it in: a store renders
+    // one billing form per payment method and hides all but the chosen one, so
+    // until a method is picked there is no form to fill.
+    await this.selectPaymentMethod();
+
+    const billingForm = this.page
+      .locator(v.billingAddressFormSelector)
+      .filter({ visible: true })
+      .first();
     await this.fillAddressForm(billingForm, order.billingAddress);
     // Sibling of the form, not a child of it. See the selector's comment.
-    await this.page.locator(v.billingAddressUpdateButtonSelector).click();
+    // Only some checkouts render it: stock Luma needs the address committed
+    // before payment will accept it, while checkouts that bind the form
+    // directly to the quote have no such control, and waiting for one that
+    // never appears burns the whole test budget.
+    const updateBilling = this.page
+      .locator(v.billingAddressUpdateButtonSelector)
+      .or(this.page.getByRole('button', { name: v.billingAddressUpdateButtonLabel }))
+      .filter({ visible: true })
+      .first();
+    if (await updateBilling.isVisible()) {
+      await updateBilling.click();
+    }
     await this.page.locator('#checkout-loader').waitFor({ state: 'hidden', timeout: 60_000 });
 
-    await this.selectPaymentMethod();
     await this.acceptCheckoutAgreements();
     return this.submitOrder();
   }
@@ -509,7 +541,8 @@ export class CheckoutPage implements ICheckoutPage {
     await this.fillAddressForm(this.page.locator('#shipping'), order.billingAddress);
   }
 
-  private async selectShippingMethodAndPay(): Promise<void> {
+  /** Chooses the store's shipping rate and waits for it to stick. */
+  private async selectShippingRate(): Promise<void> {
     const s = this.data.selectors.checkout;
 
     // NB: no `waitForLoadState('networkidle')` anywhere in this flow. Luma's
@@ -552,16 +585,26 @@ export class CheckoutPage implements ICheckoutPage {
     }
     await loader.waitFor({ state: 'hidden', timeout: 60_000 });
 
-    // Advance to payment step
-    await this.page.getByRole('button', { name: s.nextStepButtonLabel }).click();
+  }
 
-    // Clicking Next POSTs shipping-information; the payment method list is only
-    // rendered once that round-trip resolves, and the step shows
-    // "No Payment Methods" until then. A fixed pause races that request on a
-    // loaded dev box, so wait on real signals: the URL fragment flipping to
-    // #payment, then the loader clearing. Both are stock checkout behaviour,
-    // so neither is optional.
-    await this.page.waitForURL(/#payment/, { timeout: 60_000 });
+  private async selectShippingMethodAndPay(): Promise<void> {
+    const s = this.data.selectors.checkout;
+    const loader = this.page.locator('#checkout-loader');
+
+    await this.selectShippingRate();
+
+    // Advance to payment step.
+    //
+    // Retried for the same reason the rate rows are: a click that lands while
+    // the loader is back over the button is swallowed, and the step then never
+    // advances. Re-POSTing shipping-information is harmless, and the button is
+    // gone once the step has moved on.
+    await expect(async () => {
+      if (/#payment/.test(this.page.url())) return;
+      await loader.waitFor({ state: 'hidden' });
+      await this.page.getByRole('button', { name: s.nextStepButtonLabel }).click();
+      await this.page.waitForURL(/#payment/, { timeout: 30_000 });
+    }).toPass({ timeout: 120_000 });
     await loader.waitFor({ state: 'hidden', timeout: 60_000 });
 
     await this.selectPaymentMethod();
@@ -679,10 +722,8 @@ export class CheckoutPage implements ICheckoutPage {
   async startAccountCreationFromOrderSuccess(): Promise<void> {
     const s = this.data.selectors.checkout.success;
 
-    const createAccount = this.page
-      .locator(s.createAccountLinkSelector)
-      .filter({ visible: true })
-      .first();
+    const candidates = this.page.locator(s.createAccountLinkSelector).filter({ visible: true });
+    const createAccount = candidates.first();
     await expect(
       createAccount,
       'the success page offers the guest an account',
@@ -690,7 +731,7 @@ export class CheckoutPage implements ICheckoutPage {
     // The selector is the assertion: only the success page's own block links to
     // the delegation route, so reaching the form through it is what separates a
     // delegated hand-off from the header's plain registration link.
-    await createAccount.click();
+    await clickReachable(candidates);
     await this.page.waitForURL(/customer\/account\/create/, {
       timeout: 45_000,
       waitUntil: 'domcontentloaded',
