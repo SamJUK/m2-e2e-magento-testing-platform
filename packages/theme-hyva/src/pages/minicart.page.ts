@@ -39,7 +39,13 @@ export class MinicartPage implements IMinicartPage {
   }
 
   getProductRow(productTitle: string): Locator {
-    return this.minicart.getByRole('listitem').filter({ hasText: productTitle });
+    // Not every theme marks its drawer lines up as list items; fall back to
+    // the item selector the cart page uses.
+    const byRole = this.minicart.getByRole('listitem').filter({ hasText: productTitle });
+    const bySelector = this.minicart
+      .locator(this.data.selectors.minicart.itemSelector)
+      .filter({ hasText: productTitle });
+    return byRole.or(bySelector);
   }
 
   /**
@@ -83,10 +89,31 @@ export class MinicartPage implements IMinicartPage {
 
     // The remove control's accessible name is built from
     // `Remove product "%0" from cart` with the product title substituted in.
-    const removeBtn = this.minicart.getByRole('button', {
-      name: sprintf(this.data.selectors.minicart.removeItemAriaLabel, productTitle),
-      exact: true,
-    });
+    //
+    // Matched inside the line and on a normalised name: catalogue data
+    // routinely carries trailing or doubled whitespace in product names, and
+    // an exact accessible-name match then misses by one invisible character.
+    const removeLabel = sprintf(
+      this.data.selectors.minicart.removeItemAriaLabel,
+      productTitle,
+    );
+    const namePattern = new RegExp(
+      removeLabel
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\s+/g, '\\s+')
+        .replace(/"/g, '"\\s*'),
+    );
+    // Row first, then anywhere in the drawer: some themes render the remove
+    // control as a sibling of the line rather than inside it, and the row-only
+    // lookup then silently matches nothing and never clicks. Falling back to
+    // the drawer is still precise, because the control's accessible name
+    // carries the product's own title.
+    const removeBtn = this.getProductRow(productTitle)
+      .getByRole('button', { name: namePattern })
+      .or(this.minicart.getByRole('button', { name: namePattern }))
+      .filter({ visible: true })
+      .first();
 
     // Magento's standard confirm modal accept button carries .action-accept
     // regardless of its wording/theme. Hyvä's own drawer deletes directly, so
@@ -113,7 +140,11 @@ export class MinicartPage implements IMinicartPage {
           ).toHaveCount(0, { timeout: 2_000 });
         }
       }
-      await expect(removeBtn).toBeHidden({ timeout: 5_000 });
+      // The ROW, not the remove button: the drawer re-renders from
+      // customer-data after the POST, so the button detaches for a moment
+      // whether or not anything was removed, and asserting on it lets a
+      // failed removal pass.
+      await expect(this.getProductRow(productTitle)).toHaveCount(0, { timeout: 5_000 });
     }).toPass({ timeout: 45_000 });
 
     await this.page.waitForLoadState();

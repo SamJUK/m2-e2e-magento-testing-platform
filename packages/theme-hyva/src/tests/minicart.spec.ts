@@ -41,7 +41,7 @@ test.describe('Minicart (Guest)', () => {
   test(
     'can proceed to cart from minicart',
     { tag: ['@minicart'] },
-    async ({ minicartPage, page, data }) => {
+    async ({ cartPage, minicartPage, page, data }) => {
       await minicartPage.ensureMinicartIsOpen();
       const cartLink = minicartPage.minicart.getByRole('link', {
         name: data.selectors.minicart.viewCartLinkLabel,
@@ -51,11 +51,10 @@ test.describe('Minicart (Guest)', () => {
       // Anchored: an unanchored /cart/ also matches /checkout/cart/configure/
       // and any URL that merely contains the word.
       await expect(page).toHaveURL(new RegExp(`${data.slugs.cart}$`));
-      // Hyvä renders each cart line's title as a heading (see cart.spec.ts).
       await expect(
-        page.getByRole('heading', { name: data.fixtures.product.simpleProductTitle }),
+        cartPage.getProductRow(data.fixtures.product.simpleProductTitle),
         'the cart page itself rendered, not just its URL',
-      ).toBeVisible();
+      ).toHaveCount(1);
     },
   );
 
