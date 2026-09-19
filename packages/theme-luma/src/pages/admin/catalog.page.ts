@@ -146,6 +146,7 @@ export class AdminProductPage {
     productName: string,
     newUrlKey: string,
     oldUrl: string,
+    urlSuffix: string,
   ): Promise<void> {
     const s = this.data.selectors.admin.products;
 
@@ -189,7 +190,7 @@ export class AdminProductPage {
         'the redirect points at the new URL key',
         // Anchored: the restore target is a prefix of every key this test
         // generates, so a bare substring match cannot fail.
-      ).toContain(`/${newUrlKey}.html`);
+      ).toContain(`/${newUrlKey}${urlSuffix}`);
     }).toPass({ timeout: 60_000 });
   }
 }

@@ -38,7 +38,14 @@ export class AdminPermissionsPage {
       waitUntil: 'domcontentloaded',
     });
 
-    await this.page.getByLabel(s.roleNameFieldLabel, { exact: true }).fill(name);
+    // The admin remembers which tab was last open, so Role Info is not
+    // reliably the expanded one when the form loads.
+    const roleName = this.page.getByLabel(s.roleNameFieldLabel, { exact: true });
+    if (!(await roleName.isVisible())) {
+      await this.page.getByText(s.roleInfoTabLabel, { exact: true }).first().click();
+      await expect(roleName, 'the Role Info tab is open').toBeVisible({ timeout: 30_000 });
+    }
+    await roleName.fill(name);
     await this.page
       .getByLabel(s.identityPasswordFieldLabel, { exact: true })
       .fill(this.identityPassword);
