@@ -46,4 +46,31 @@ test.describe('Storefront health', () => {
       ).toBeVisible();
     },
   );
+
+  test(
+    'the storefront serves its static assets',
+    { tag: ['@health', '@smoke'] },
+    async ({ page, data }) => {
+      // A store whose static content was never deployed still renders: the HTML
+      // is fine and every asset 404s, so nothing interactive works and every
+      // write test fails somewhere else entirely.
+      const broken: string[] = [];
+      page.on('response', (response) => {
+        if (response.status() >= 400 && /\.(js|css)(\?|$)/.test(response.url())) {
+          broken.push(`${response.status()} ${response.url()}`);
+        }
+      });
+
+      await page.goto(data.slugs.products.simpleProduct, { waitUntil: 'load' });
+
+      // Defined, not a particular type: jQuery is a function, Alpine an object.
+      await expect
+        .poll(() => page.evaluate(() => typeof (window as unknown as Record<string, unknown>).Alpine), {
+          message: "the theme's JS stack finished loading",
+        })
+        .not.toBe('undefined');
+
+      expect(broken, 'every stylesheet and script was served').toEqual([]);
+    },
+  );
 });
