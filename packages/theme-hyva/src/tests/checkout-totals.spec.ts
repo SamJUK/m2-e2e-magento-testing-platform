@@ -1,5 +1,5 @@
 import { fakerEN_GB as faker } from '@faker-js/faker';
-import { readMoney, cityName } from '@samjuk/e2e-m2-playwright-core';
+import { grossUp, readMoney, cityName } from '@samjuk/e2e-m2-playwright-core';
 import { hyvaTest as test, expect } from '../fixtures';
 import type { CheckoutOrderData } from '../index';
 
@@ -136,10 +136,11 @@ test.describe('Checkout totals (Guest)', () => {
         Math.abs(discount),
         `the discount is ${coupon.percent}% of the subtotal`,
       ).toBeCloseTo((subtotalBefore * coupon.percent) / 100, 2);
+      // As in the cart: an ex-tax discount against inc-tax totals.
       expect(
         grandTotalBefore - grandTotalAfter,
         'the order total dropped by exactly the discount',
-      ).toBeCloseTo(Math.abs(discount), 2);
+      ).toBeCloseTo(grossUp(Math.abs(discount), data), 2);
     },
   );
 });
