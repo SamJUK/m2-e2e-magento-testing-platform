@@ -1,4 +1,4 @@
-import { readMoney, sprintf } from '@samjuk/e2e-m2-playwright-core';
+import { grossUp, readMoney, sprintf } from '@samjuk/e2e-m2-playwright-core';
 import { lumaTest as test, expect } from '../fixtures';
 import { MinicartPage } from '../pages/minicart.page';
 
@@ -138,10 +138,12 @@ test.describe('Cart (Guest)', () => {
         Math.abs(discount),
         `the discount is ${coupon.percent}% of the subtotal`,
       ).toBeCloseTo((subtotalBefore * coupon.percent) / 100, 2);
+      // The discount line is ex-tax on a store that displays inc-tax totals,
+      // so the total falls by the discount plus its tax.
       expect(
         grandTotalBefore - grandTotalAfter,
         'the grand total dropped by exactly the discount',
-      ).toBeCloseTo(Math.abs(discount), 2);
+      ).toBeCloseTo(grossUp(Math.abs(discount), data), 2);
     },
   );
 

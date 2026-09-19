@@ -92,7 +92,10 @@ export class MinicartPage implements IMinicartPage {
           ).toHaveCount(0, { timeout: 2_000 });
         }
       }
-      await expect(row).toBeHidden({ timeout: 5_000 });
+      // Counted, not hidden: the dropdown re-renders from customer-data after
+      // the POST, so the row detaches for a moment whether or not anything was
+      // removed, and toBeHidden lets a failed removal pass.
+      await expect(row).toHaveCount(0, { timeout: 5_000 });
     }).toPass({ timeout: 45_000 });
 
     await this.page.waitForLoadState();

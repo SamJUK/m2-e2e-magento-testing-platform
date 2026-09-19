@@ -1,5 +1,6 @@
-import { readMoney, sprintf } from '@samjuk/e2e-m2-playwright-core';
+import { grossUp, readMoney, sprintf } from '@samjuk/e2e-m2-playwright-core';
 import { hyvaTest as test, expect } from '../fixtures';
+import { CartPage } from '../pages/cart.page';
 import { MinicartPage } from '../pages/minicart.page';
 
 test.describe('Cart (Guest)', () => {
@@ -12,13 +13,13 @@ test.describe('Cart (Guest)', () => {
     'product is visible in cart',
     { tag: ['@cart', '@smoke'] },
     async ({ page, cartPage, data }) => {
-      // Hyvä renders each cart line's title as <h3 class="product-item-name">
-      // wrapping <a><strong>Name</strong></a>, so the heading role is the
-      // stable handle (Luma nests these the other way round).
+      // Through the page object's row locator: a real Hyvä theme is free to
+      // render the line's title as <strong><a> rather than a heading, so the
+      // heading role is not a safe handle.
       await expect(
-        page.getByRole('heading', { name: data.fixtures.product.simpleProductTitle }),
+        cartPage.getProductRow(data.fixtures.product.simpleProductTitle),
         'Product is visible in cart',
-      ).toBeVisible();
+      ).toHaveCount(1);
       // A visible product name says nothing about pricing. Assert the money.
       await cartPage.expectTotalsAreCoherent(data.fixtures.product.simpleProductTitle);
     },
@@ -43,7 +44,7 @@ test.describe('Cart (Guest)', () => {
   test(
     'the cart survives a page reload and a new tab',
     { tag: ['@cart', '@smoke'] },
-    async ({ page, minicartPage, data }) => {
+    async ({ page, cartPage, minicartPage, data }) => {
       // add to cart, a reload and a second tab load on top of the beforeEach
       // do not fit the default budget on a dev-mode store.
       test.slow();
@@ -59,9 +60,9 @@ test.describe('Cart (Guest)', () => {
 
       await page.reload({ waitUntil: 'domcontentloaded' });
       await expect(
-        page.getByRole('heading', { name: title }),
+        cartPage.getProductRow(title),
         'the cart page still lists the product after a reload',
-      ).toBeVisible();
+      ).toHaveCount(1);
       await expect
         .poll(() => minicartPage.getItemCount(), {
           timeout: 30_000,
@@ -78,9 +79,9 @@ test.describe('Cart (Guest)', () => {
       try {
         await tab.goto(data.slugs.cart, { waitUntil: 'domcontentloaded' });
         await expect(
-          tab.getByRole('heading', { name: title }),
+          new CartPage(tab, data).getProductRow(title),
           'the cart page in a new tab lists the product',
-        ).toBeVisible();
+        ).toHaveCount(1);
         await expect
           .poll(() => new MinicartPage(tab, data).getItemCount(), {
             timeout: 30_000,
@@ -141,10 +142,12 @@ test.describe('Cart (Guest)', () => {
         Math.abs(discount),
         `the discount is ${coupon.percent}% of the subtotal`,
       ).toBeCloseTo((subtotalBefore * coupon.percent) / 100, 2);
+      // The discount line is ex-tax on a store that displays inc-tax totals,
+      // so the total falls by the discount plus its tax.
       expect(
         grandTotalBefore - grandTotalAfter,
         'the grand total dropped by exactly the discount',
-      ).toBeCloseTo(Math.abs(discount), 2);
+      ).toBeCloseTo(grossUp(Math.abs(discount), data), 2);
     },
   );
 
