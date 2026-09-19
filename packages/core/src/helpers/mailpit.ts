@@ -100,7 +100,7 @@ export class Mailpit {
           message:
             options.message ??
             `Mailpit should receive a message matching ${query} carrying a link matching ${pattern}`,
-          timeout: options.timeout ?? 15_000,
+          timeout: options.timeout ?? 45_000,
         },
       )
       .toBeTruthy();
@@ -119,6 +119,9 @@ export class Mailpit {
    *     { value: orderNumber },
    *   ])
    */
+  // The default budget is generous on purpose: a store sends transactional mail
+  // after the request that triggered it has returned, and Mailpit has to index
+  // it before a search finds it. 15s was enough until a loaded store wasn't.
   async waitForMessage(
     segments: MailpitQuerySegment[],
     options: { timeout?: number; message?: string } = {},
@@ -129,7 +132,7 @@ export class Mailpit {
     await expect
       .poll(async () => (await this.searchInbox(query)).messages_count > 0, {
         message: options.message ?? `Mailpit should receive a message matching: ${query}`,
-        timeout: options.timeout ?? 15_000,
+        timeout: options.timeout ?? 45_000,
       })
       .toBeTruthy();
   }

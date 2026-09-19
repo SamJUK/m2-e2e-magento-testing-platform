@@ -53,7 +53,7 @@ export async function assertNotDirtyRun(config: ProjectConfig): Promise<void> {
     `Dumping now would overwrite the clean restore point.\n` +
     `To recover, either:\n` +
     `  1. Restore the clean dump taken before that run: import ${dumpPath} ` +
-    `(e.g. \`warden db import < ${dumpPath}\`) — this also removes the flag; or\n` +
+    `(e.g. \`warden db import < ${dumpPath}\`), then delete ${sentinelPath(config)}; or\n` +
     `  2. Accept the current database state: delete ${sentinelPath(config)} and clear the flag: ` +
     `DELETE FROM ${flagTable(config)} WHERE flag_code='${DIRTY_FLAG_CODE}'`,
   );
