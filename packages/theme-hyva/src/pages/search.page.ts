@@ -22,9 +22,13 @@ export class SearchPage implements ISearchPage {
   async search(query: string): Promise<void> {
     await this.page.goto(this.data.slugs.search.startingPage);
 
-    if (!(await this.searchPanel.isVisible())) {
+    // Gate on the INPUT, not the panel: themes that render the search box
+    // inline in the header have neither panel nor toggle, and waiting for a
+    // toggle that does not exist burns the whole test budget.
+    if (!(await this.searchInput.isVisible())) {
       await this.searchToggle.click();
       await this.searchPanel.waitFor({ state: 'visible' });
+      await this.searchInput.waitFor({ state: 'visible' });
     }
 
     await this.searchInput.fill(query);
@@ -36,14 +40,21 @@ export class SearchPage implements ISearchPage {
     // form's own submit button on alternate attempts.
     // NOT networkidle: real stores keep analytics/chat sockets busy
     // indefinitely, so it never fires — wait on the results URL instead.
-    const submitButton = this.searchPanel
+    // Scoped to the input's own form, not the panel: a theme that renders the
+    // search box inline has no panel element for the button to sit inside.
+    const submitButton = this.page
+      .locator('form')
+      .filter({ has: this.searchInput })
       .getByRole('button', { name: this.data.selectors.search.searchButtonLabel })
+      .filter({ visible: true })
       .first();
     const resultsUrl = new RegExp(this.data.slugs.search.resultsPagePrefix);
     let attempt = 0;
     await expect(async () => {
       attempt += 1;
-      if (attempt % 2 === 1) {
+      // Enter first; the button is only a fallback, and a theme that renders
+      // its submit as a hidden icon has none to click.
+      if (attempt % 2 === 1 || !(await submitButton.isVisible())) {
         await this.searchInput.press('Enter');
       } else {
         await submitButton.click({ timeout: 5_000 });

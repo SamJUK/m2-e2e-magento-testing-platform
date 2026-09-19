@@ -3,6 +3,8 @@ import {
   resetFormKey,
   sprintf,
   waitForFormKey,
+  setCheckbox,
+  setSelect,
   type MergedData,
 } from '@samjuk/e2e-m2-playwright-core';
 import type {
@@ -159,6 +161,27 @@ export class AccountPage implements IAccountPage {
       waitUntil: 'domcontentloaded',
     });
     await expect(this.page).toHaveURL(accountUrlPattern(this.data.slugs.account.loginSuccess));
+  }
+
+  /**
+   * Ticks the change-email box, whether or not the theme shows the input.
+   *
+   * check() acts on the input itself, and themes that style the control hide it
+   * and present a label - so the box is unclickable and the email field never
+   * appears. Clicking the label is what a customer does.
+   */
+  private async tickChangeEmail(form: Locator): Promise<void> {
+    const s = this.data.selectors.accountEditPage;
+    const box = form.locator(s.changeEmailCheckboxSelector);
+
+    if (await box.isChecked()) {
+      return;
+    }
+    if (await box.isVisible()) {
+      await box.check();
+      return;
+    }
+    await form.locator(`label[for="${s.changeEmailCheckboxSelector.replace('#', '')}"]`).click();
   }
 
   async logout(): Promise<void> {
@@ -367,9 +390,9 @@ export class AccountPage implements IAccountPage {
     const form = this.page.locator(s.formSelector);
     await form.getByLabel(s.orderIdFieldLabel, { exact: true }).fill(order.orderNumber);
     await form.getByLabel(s.lastNameFieldLabel, { exact: true }).fill(order.lastName);
-    await form
-      .getByLabel(s.searchByFieldLabel, { exact: true })
-      .selectOption({ label: s.searchByEmailOptionLabel });
+    const searchBy = form
+      .getByLabel(s.searchByFieldLabel, { exact: true });
+    await setSelect(searchBy, { label: s.searchByEmailOptionLabel });
     await form.getByLabel(s.emailFieldLabel, { exact: true }).fill(order.email);
     await form.getByRole('button', { name: s.submitButtonLabel }).click();
 
@@ -420,7 +443,7 @@ export class AccountPage implements IAccountPage {
     // form key lands, so an early click is dropped and the email field never
     // appears. Retry until it does.
     await expect(async () => {
-      await form.locator(s.changeEmailCheckboxSelector).check();
+      await this.tickChangeEmail(form);
       await expect(emailField).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 45_000 });
 
@@ -466,7 +489,7 @@ export class AccountPage implements IAccountPage {
     const emailField = form.getByLabel(s.emailFieldLabel, { exact: true });
 
     await expect(async () => {
-      await form.locator(s.changeEmailCheckboxSelector).check();
+      await this.tickChangeEmail(form);
       await expect(emailField).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 45_000 });
 
@@ -576,7 +599,7 @@ export class AccountPage implements IAccountPage {
       checkbox,
       'the account offers exactly one subscription checkbox',
     ).toHaveCount(1, { timeout: 30_000 });
-    await checkbox.setChecked(subscribed);
+    await setCheckbox(checkbox, subscribed);
     await form.getByRole('button', { name: s.saveButtonLabel }).click();
 
     await expect(
@@ -700,6 +723,7 @@ export class ForgotPasswordPage implements IForgotPasswordPage {
 
 export class RegisterPage implements IRegisterPage {
   readonly page: Page;
+  readonly form: Locator;
   readonly firstNameField: Locator;
   readonly lastNameField: Locator;
   readonly emailField: Locator;
@@ -711,12 +735,26 @@ export class RegisterPage implements IRegisterPage {
     this.page = page;
     const s = data.selectors.registerPage;
     const form = page.locator('#form-validate');
+    this.form = form;
     this.firstNameField = form.getByLabel(s.firstNameFieldLabel);
     this.lastNameField = form.getByLabel(s.lastNameFieldLabel);
     this.emailField = form.getByLabel(s.emailFieldLabel, { exact: true });
     this.passwordField = form.getByLabel(s.passwordFieldLabel, { exact: true });
     this.confirmPasswordField = form.getByLabel(s.confirmPasswordFieldLabel);
     this.submitButton = form.getByRole('button', { name: s.submitButtonLabel });
+  }
+
+  private async fillAdditionalFields(): Promise<void> {
+    const extras = this.data.inputs.account.register.additionalFields as Record<string, string>;
+    for (const [label, value] of Object.entries(extras)) {
+      const field = this.form.getByLabel(label, { exact: true }).first();
+      const tag = await field.evaluate((el) => el.tagName);
+      if (tag === 'SELECT') {
+        await setSelect(field, { label: value });
+      } else {
+        await field.fill(value);
+      }
+    }
   }
 
   async createNewAccount(credentials: RegisterCredentials): Promise<void> {
@@ -729,6 +767,7 @@ export class RegisterPage implements IRegisterPage {
     await this.emailField.fill(credentials.email);
     await this.passwordField.fill(credentials.password);
     await this.confirmPasswordField.fill(credentials.password);
+    await this.fillAdditionalFields();
     await this.submitButton.click();
     // Account creation + the dashboard render can each take >10s on a dev-mode
     // store, so wait out the redirect instead of racing the expect timeout.
@@ -767,6 +806,7 @@ export class RegisterPage implements IRegisterPage {
     await this.emailField.fill(credentials.email);
     await this.passwordField.fill(credentials.password);
     await this.confirmPasswordField.fill(credentials.password);
+    await this.fillAdditionalFields();
     await this.submitButton.click();
 
     await expect(
@@ -796,6 +836,7 @@ export class RegisterPage implements IRegisterPage {
     await this.emailField.fill(credentials.email);
     await this.passwordField.fill(credentials.password);
     await this.confirmPasswordField.fill(credentials.password);
+    await this.fillAdditionalFields();
     await this.submitButton.click();
 
     await expect(

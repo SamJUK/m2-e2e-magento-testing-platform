@@ -153,10 +153,13 @@ export class CartPage implements ICartPage {
 
     expect(quantity, 'cart line quantity is at least one').toBeGreaterThanOrEqual(1);
     expect(unitPrice, 'cart line unit price is greater than zero').toBeGreaterThan(0);
-    expect(lineTotal, `cart line total is the unit price x ${quantity}`).toBeCloseTo(
-      unitPrice * quantity,
-      2,
-    );
+    // A VAT-inclusive store rounds the unit price it displays but computes the
+    // row from the unrounded ex-tax figure, so the two can differ by up to half
+    // a penny per unit.
+    expect(
+      Math.abs(lineTotal - unitPrice * quantity),
+      `cart line total is the unit price x ${quantity}`,
+    ).toBeLessThanOrEqual(0.005 * (quantity + 1));
 
     const lineCount = await this.page.locator(this.data.selectors.cart.cartItemSelector).count();
     if (lineCount === 1) {
@@ -181,10 +184,17 @@ export class CartPage implements ICartPage {
     // Hyvä's cart page has no confirmation modal for a single line item — the
     // remove button posts a generated form and the page navigates. (The
     // "Clear Shopping Cart" action is the only one that opens a dialog.)
-    const removeBtn = this.page.getByRole('button', {
-      name: sprintf(this.data.selectors.cart.removeItemAriaLabel, productTitle),
-      exact: true,
-    });
+    // Scoped to the line, and matched on either control shape: themes render
+    // this as a button labelled with the product, or as a plain link with a
+    // fixed title and no product name at all.
+    const label = sprintf(this.data.selectors.cart.removeItemAriaLabel, productTitle);
+    const row = this.getProductRow(productTitle);
+    const removeBtn = row
+      .getByRole('button', { name: label, exact: true })
+      .or(row.getByRole('link', { name: label, exact: true }))
+      .or(row.getByTitle(label, { exact: true }))
+      .filter({ visible: true })
+      .first();
     await removeBtn.click();
 
     await expect(
