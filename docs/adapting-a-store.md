@@ -83,6 +83,35 @@ clearing a real store's reservations would release stock committed to real
 orders. A store running at `strategy: 'none'` without that flag has to manage
 the stock of whatever it lets the suite order.
 
+## The seed writes to app/etc/config.php
+
+`seed.disableTwoFactorModules` defaults to **true**, and the seed disables 2FA
+with `bin/magento module:disable Magento_TwoFactorAuth
+Magento_AdminAdobeImsTwoFactorAuth`. That command rewrites `app/etc/config.php`,
+which most real projects track in git, so a run leaves the working tree dirty
+even when both modules were already disabled — the rewrite reorders the module
+list whatever the values were.
+
+Set it to false on any store whose `config.php` is tracked and whose 2FA is
+already off another way:
+
+```ts
+seed: {
+  disableTwoFactorModules: false,
+},
+```
+
+Admin tests need 2FA off one way or the other, and Magento's own module
+offers no config switch for it — `twofactorauth/general` carries
+`force_providers`, retry count and lock expiry, nothing that turns it off. So
+the alternatives are a vendor or client module's own flag (one client store
+uses `<vendor>_twofactorauth/general/disable_tfa` in `env.php`, which is
+normally gitignored), or removing the module in `composer.json`.
+
+If neither applies, the choice is a dirty `config.php` or no admin coverage.
+Leave the default alone on a throwaway environment, where the dirt costs
+nothing; on a tracked store, expect to revert the file after a run.
+
 ## Known store-side failures
 
 These are the store's faults, not the suite's, but they present as suite

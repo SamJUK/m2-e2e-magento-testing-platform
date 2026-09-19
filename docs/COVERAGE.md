@@ -20,7 +20,7 @@ Read the headline as: unique ✅ test titles, then ⬜ rows. A few tests are
 listed under two areas on purpose (the invoice and shipment emails belong to
 both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 
-**Today: 111 ✅ · 58 ⬜**
+**Today: 112 ✅ · 58 ⬜**
 
 ---
 
@@ -32,6 +32,7 @@ both Transactional email and Admin > Sales), so ✅ rows outnumber ✅ titles.
 |---|---|---|
 | `key storefront pages respond with HTTP 200` | `@health @smoke` | ✅ |
 | `a nonexistent URL renders the 404 page` | `@health @smoke @negative` | ✅ |
+| `the storefront serves its static assets` | `@health @smoke` | ✅ |
 | robots.txt and sitemap.xml are served | | ⬜ |
 | no console errors on the key storefront pages | | ⬜ |
 | the store responds under HTTPS with no mixed content | | ⬜ |
