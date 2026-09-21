@@ -73,6 +73,8 @@ pnpm test
 
 Expect failures on a store the suite has not seen before. They are the store telling you what to override in `config/*.json`. See [Adapting the suite to a store](./docs/adapting-a-store.md).
 
+Handing the install and that triage to a coding agent works well. The prompts are in [Driving the setup with an AI agent](./docs/adapting-a-store.md#driving-the-setup-with-an-ai-agent).
+
 To scaffold a **module test package** instead:
 
 ```bash
@@ -132,7 +134,7 @@ Rejection is asserted, not merely absence of success. Twelve `@negative` tests c
 | | |
 |---|---|
 | [Test coverage](./docs/COVERAGE.md) | Every test by area, the gaps, and what is out of scope |
-| [Adapting the suite to a store](./docs/adapting-a-store.md) | Exclusions and reason codes, where a new test belongs, database rollback |
+| [Adapting the suite to a store](./docs/adapting-a-store.md) | Exclusions and reason codes, where a new test belongs, database rollback, agent prompts |
 | [Module test packages](./docs/modules.md) | Writing one, the conventions it has to follow, and modules worth covering |
 | [Development](./docs/development.md) | Monorepo setup, test discovery, creating packages, releasing |
 | [The disposable test environment](./docs/test-environment.md) | How the platform tests itself |

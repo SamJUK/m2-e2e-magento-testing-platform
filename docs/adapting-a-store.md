@@ -132,3 +132,25 @@ rm pub/static/frontend/sri-hashes.json && bin/magento cache:flush
 
 Parallel workers hitting a production-mode store just after the seed's cache
 flush is a reliable way to provoke it.
+
+## Driving the setup with an AI agent
+
+Every store so far has been set up by pointing a coding agent at the repo and
+the npx command and leaving it to work the rest out:
+
+```text
+Read https://github.com/SamJUK/m2-e2e-magento-testing-platform and set the
+suite up in this store: npx @samjuk/create-magento-e2e, then follow
+dev/tests/e2e/README.md. Work out the environment, theme and URLs from the
+repo. Run it and tell me what fails and why before you change anything.
+```
+
+It works because the README and the scaffolded template already say what an
+agent needs, so anything it cannot infer it finds by reading. Adjust it for
+your own setup: the environment, the theme, whichever agent you run, and
+whatever your team wants it to do without asking first.
+
+The last sentence is the part worth keeping in whatever you rewrite it into.
+Left alone an agent excludes whatever is red and reports the suite green, and
+an exclusion with a vague note is worse than a red test because it stops being
+visible.
