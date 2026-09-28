@@ -191,17 +191,18 @@ export async function runSeed(config: ProjectConfig): Promise<void> {
 
   console.log('[e2e-core] Seeding Magento instance...');
 
-  // Create or recreate dedicated playwright test admin user
+  // admin:user:create updates a user that already exists: new password,
+  // is_active back on. It leaves a lockout from earlier failed logins in
+  // place, so unlock as well. Both are core commands; there is no core
+  // admin:user:delete (that one is n98-magerun2's).
   const { username, password, slug: _slug } = config.admin;
-  await config.shell.exec(
-    `php bin/magento admin:user:delete playwright-tests@example.com -f || true`,
-  );
   await config.shell.exec(
     `php bin/magento admin:user:create ` +
     `--admin-email='playwright-tests@example.com' ` +
     `--admin-firstname='Playwright' --admin-lastname='Tests' ` +
     `--admin-user=${shellQuote(username)} --admin-password=${shellQuote(password)} || true`,
   );
+  await config.shell.exec(`php bin/magento admin:user:unlock ${shellQuote(username)} || true`);
 
   // Record what these paths hold before touching them, so teardown can put
   // them back on a store the database strategy will not restore.
