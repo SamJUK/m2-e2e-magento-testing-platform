@@ -1,104 +1,92 @@
 import type { ProjectConfig } from '../config/schema';
+import { loadData } from '../data';
+
+const ATTEMPTS = 5;
+const RETRY_DELAY_MS = 3000;
 
 /**
- * Fails the run when the store's configured search engine is unreachable.
+ * Fails the run when the store's search cannot return the products the search
+ * tests expect.
  *
- * A dead OpenSearch/Elasticsearch does not take the storefront down — the
+ * A dead OpenSearch/Elasticsearch does not take the storefront down. The
  * homepage, cart and checkout all keep working. What breaks is every category
  * listing and every search, and they break as selector timeouts: "expected 1
  * product tile, found 0". That reads as a broken theme or a broken suite, and
  * it cost three separate diagnosis cycles in one day before this existed.
  *
- * Checked through `shell.exec` rather than from the test runner's host,
- * because the engine is usually only addressable from inside the store's own
- * network (`opensearch:9200` on a compose network, for instance). The hooks
- * reject on a non-zero exit, which is what turns this into a hard failure.
+ * Asks the store to search rather than working out where the engine lives.
+ * This guard used to read the engine's host from
+ * `catalog/search/<engine>_server_hostname` and open a socket to it. Engines
+ * keep their connection details wherever they like (ElasticSuite under
+ * `smile_elasticsuite_core_base_settings`, Amasty under
+ * `amasty_elastic/connection`), so the lookup needed a list of engines that
+ * could never be complete, and every engine missing from it made the guard
+ * refuse a healthy store, the one failure mode it must never produce.
+ * `/V1/search` goes through the same adapter as the storefront whatever the
+ * engine, and is anonymous in stock Magento.
  *
- * Reads the engine's host and port from the store's own configuration rather
- * than assuming: `catalog/search/<engine>_server_hostname`, falling back to
- * Magento's own defaults when the store has never overridden them.
- *
- * A third-party engine may keep its connection details somewhere else
- * entirely. Smile ElasticSuite is the one we hit: it sets
- * `catalog/search/engine` to `elasticsuite` and stores its servers under
- * `smile_elasticsuite_core_base_settings/es_client/servers`, so the
- * `catalog/search/elasticsuite_server_hostname` this guard used to look for
- * does not exist and never will. That made the guard refuse to run against a
- * perfectly healthy store — the one failure mode it must never produce — so it
- * now falls through to the engine's own path before giving up.
+ * Passes on hits, not on status. Magento's own OpenSearch adapter catches a
+ * connection failure, logs it and returns an empty result, and Amasty's does
+ * the same, so a dead engine answers 200 with nothing in it. Zero hits also
+ * covers an index that was never built, which fails the search tests just the
+ * same and which the socket check could not see.
  */
 export async function assertSearchEngineReachable(config: ProjectConfig): Promise<void> {
-  if (!config.shell?.exec) {
-    console.log('[e2e-core] No shell.exec hook configured — skipping search engine check.');
-    return;
+  const term = loadData({ projectRoot: process.cwd() }).inputs.search.query;
+  const url = new URL('rest/V1/search', config.baseUrl.replace(/\/?$/, '/'));
+  url.searchParams.set('searchCriteria[requestName]', 'quick_search_container');
+  url.searchParams.set('searchCriteria[filterGroups][0][filters][0][field]', 'search_term');
+  url.searchParams.set('searchCriteria[filterGroups][0][filters][0][value]', term);
+
+  let problem = '';
+
+  // Retried because an engine that has just started accepts connections before
+  // its shards recover, and answers with no hits for a few seconds.
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    if (attempt > 1) await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+
+    let response: Response;
+    try {
+      response = await fetch(url, { headers: { Accept: 'application/json' } });
+    } catch (error) {
+      const cause = (error as Error & { cause?: Error }).cause;
+      problem = `${url.origin} is unreachable (${cause?.message ?? (error as Error).message})`;
+      continue;
+    }
+
+    if (response.status >= 500) {
+      const body = (await response.json().catch(() => ({}))) as { message?: string };
+      problem = `/V1/search answered ${response.status}${body.message ? `: ${body.message}` : ''}`;
+      continue;
+    }
+
+    if (!response.ok) {
+      // Blocked at the web server, by a WAF, or by a module that locks down
+      // anonymous REST. That says nothing about the engine, and refusing here
+      // would refuse a healthy store.
+      console.warn(
+        `[e2e-core] Search check skipped: /V1/search answered ${response.status}, ` +
+          'so the search engine could not be checked.',
+      );
+      return;
+    }
+
+    const { total_count: hits } = (await response.json()) as { total_count: number };
+    if (hits > 0) {
+      console.log(`[e2e-core] Search returned ${hits} results for "${term}".`);
+      return;
+    }
+    problem = `searching for "${term}" returned no products`;
   }
 
-  // Magento's own config, not raw core_config_data.
-  //
-  // A store that has never overridden `catalog/search/engine` has no row for
-  // it, and the effective value comes from config.xml — so reading the table
-  // directly means guessing the engine, then looking up a hostname key that
-  // does not exist, then probing a default host that was never the right one.
-  // A real store here (elasticsearch7_server_hostname set, engine unset) would
-  // have been reported unreachable while perfectly healthy, which is the one
-  // failure mode this guard must never produce.
-  //
-  // Bootstrapping Magento costs a second or two and gives the values the store
-  // actually uses, defaults included.
-  const script = [
-    '<?php',
-    'require "app/bootstrap.php";',
-    'try {',
-    '  $bootstrap = \\Magento\\Framework\\App\\Bootstrap::create(BP, $_SERVER);',
-    '  $objectManager = $bootstrap->getObjectManager();',
-    '  $scopeConfig = $objectManager->get(\\Magento\\Framework\\App\\Config\\ScopeConfigInterface::class);',
-    '} catch (Throwable $e) {',
-    '  fwrite(STDERR, "cannot bootstrap Magento: " . $e->getMessage() . "\n");',
-    '  exit(1);',
-    '}',
-    '$engine = (string) $scopeConfig->getValue("catalog/search/engine");',
-    'if ($engine === "") {',
-    '  fwrite(STDERR, "no catalog/search/engine configured\n");',
-    '  exit(1);',
-    '}',
-    '$host = (string) $scopeConfig->getValue("catalog/search/" . $engine . "_server_hostname");',
-    '$port = (string) $scopeConfig->getValue("catalog/search/" . $engine . "_server_port");',
-    '// Engines that keep their connection details outside catalog/search.',
-    '// ElasticSuite: one or more "host:port" entries, comma separated.',
-    'if ($host === "") {',
-    '  $servers = (string) $scopeConfig->getValue("smile_elasticsuite_core_base_settings/es_client/servers");',
-    '  if ($servers !== "") {',
-    '    $first = trim(explode(",", $servers)[0]);',
-    '    $parts = explode(":", $first);',
-    '    $host = $parts[0];',
-    '    if (isset($parts[1]) && $parts[1] !== "") { $port = $parts[1]; }',
-    '  }',
-    '}',
-    'if ($host === "") { $host = "localhost"; }',
-    'if ($port === "") { $port = "9200"; }',
-    '$socket = @fsockopen($host, (int) $port, $errno, $errstr, 5);',
-    'if (!$socket) {',
-    '  fwrite(STDERR, "search engine " . $engine . " at " . $host . ":" . $port . " is unreachable (" . $errstr . ")\n");',
-    '  exit(1);',
-    '}',
-    'fclose($socket);',
-    'echo "search engine " . $engine . " at " . $host . ":" . $port . " is reachable\n";',
-  ].join('\n');
-
-  const encoded = Buffer.from(script, 'utf-8').toString('base64');
-
-  try {
-    await config.shell.exec(`echo ${encoded} | base64 -d | php`);
-  } catch {
-    throw new Error(
-      '[e2e-core] REFUSING TO RUN: the store\'s configured search engine is not reachable ' +
-        'from the store itself.\n' +
-        'Every category listing and every search would fail as a selector timeout — ' +
-        '"expected products, found none" — which looks like a broken theme rather than ' +
-        'a missing service.\n' +
-        'On Warden: `warden env up` (the search container is easy to leave stopped). ' +
-        'On the docker stack: tests/docker/run.sh up <target>.\n' +
-        'Then reindex: bin/magento indexer:reindex catalogsearch_fulltext',
-    );
-  }
+  throw new Error(
+    `[e2e-core] REFUSING TO RUN: ${problem}.\n` +
+      'Every category listing and every search would fail as a selector timeout, which ' +
+      'looks like a broken theme rather than a missing service.\n' +
+      'Check the search engine is running (Warden: `warden env up`; the docker stack: ' +
+      'tests/docker/run.sh up <target>), then reindex: ' +
+      'bin/magento indexer:reindex catalogsearch_fulltext\n' +
+      'If the catalogue genuinely has nothing matching, set inputs.search.query in ' +
+      'config/inputs.json.',
+  );
 }
