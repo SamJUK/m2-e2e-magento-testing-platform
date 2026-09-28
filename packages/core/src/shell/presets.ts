@@ -104,7 +104,9 @@ export function wardenShell(cwd: string): ProjectShellHooks {
       await run('warden', ['shell', '-c', cmd], cwd);
     },
     dbDump: async (outPath) => {
-      await run('warden', ['db', 'dump'], cwd, { stdoutFile: outPath });
+      // Warden's db user has no PROCESS privilege. mysqldump still writes the
+      // dump without it, but prints an access-denied error for tablespaces.
+      await run('warden', ['db', 'dump', '--no-tablespaces'], cwd, { stdoutFile: outPath });
     },
     dbImport: async (inPath) => {
       await run('warden', ['db', 'import'], cwd, { stdinFile: inPath });
