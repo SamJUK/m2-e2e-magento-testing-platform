@@ -125,6 +125,9 @@ export function ddevShell(cwd: string): ProjectShellHooks {
       await run('ddev', ['exec', cmd], cwd);
     },
     dbDump: async (outPath) => {
+      // No --no-tablespaces here: export-db builds its own dump command and
+      // takes no extra flags. DDEV adds --no-tablespaces itself on MySQL 9.5+
+      // (GetDBDumpCommand in ddev's pkg/ddevapp).
       await run('ddev', ['export-db', '--gzip=false', `--file=${outPath}`], cwd);
     },
     dbImport: async (inPath) => {
