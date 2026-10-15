@@ -1,6 +1,6 @@
 {
   "name": "@samjuk/e2e-m2-playwright-core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Core Playwright framework for Magento 2 E2E testing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
