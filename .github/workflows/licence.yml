@@ -1,0 +1,28 @@
+# Every source file we publish carries the OSL-3.0 header, so the licence
+# travels with any file lifted out of a package. module-template and
+# tests/project are left out on purpose: the scaffolder copies them into the
+# user's own project, and that code is theirs.
+name: Licence
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  headers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Every source file carries the OSL-3.0 header
+        run: |
+          missing=$(git ls-files -z -- \
+              'packages/*/src/*.ts' 'packages/*/src/*.php' 'packages/create-magento-e2e/bin/*.js' \
+              'scripts/*.mjs' 'tests/docker/*.sh' ':!packages/create-magento-e2e/module-template' \
+            | xargs -0 -r grep -L 'SPDX-License-Identifier: OSL-3.0' || true)
+          [ -z "$missing" ] || { printf '::error::Missing the OSL-3.0 header:\n%s\n' "$missing"; exit 1; }

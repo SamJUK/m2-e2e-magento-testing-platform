@@ -72,5 +72,5 @@ discovery, creating packages and the release process.
 
 ## Licence
 
-Contributions are licensed under [OSL-3.0](./LICENSE.txt), the same as the rest
+Contributions are licensed under [OSL-3.0](./LICENSE), the same as the rest
 of the repository.

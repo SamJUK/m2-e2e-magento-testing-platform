@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 import { test } from '../fixtures/default';
 // A separate `import type` rather than an inline `type` modifier: the inline
 // form is erased by tsc but tripped the test runner's own transpiler.

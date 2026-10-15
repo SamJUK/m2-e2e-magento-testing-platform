@@ -196,4 +196,4 @@ Bare words are targets, `@`words are Playwright tags. It defaults to `luma` beca
 
 ## License
 
-OSL-3.0. Copyright © SamJUK.
+OSL-3.0. Copyright (c) 2026 Sam James. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE).

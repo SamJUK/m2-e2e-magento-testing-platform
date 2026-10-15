@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 // Theme fixtures
 export { hyvaTest, expect } from './fixtures';
 export type { HyvaFixtures, HyvaTest } from './fixtures';

@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * The scaffolder's template pins @samjuk versions as literal strings, so a
  * release bumps every workspace package and leaves the template behind. That
  * failure is silent and slow: `npx @samjuk/create-magento-e2e` keeps working,

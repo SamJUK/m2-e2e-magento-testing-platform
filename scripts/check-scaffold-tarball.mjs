@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * The scaffolder is only correct as a TARBALL. A checkout of this repo is not
  * what anybody runs: `npx` fetches what npm packed, and npm does not pack
  * everything the directory holds.

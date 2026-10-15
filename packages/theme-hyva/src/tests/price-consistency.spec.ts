@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 import { fakerEN_GB as faker } from '@faker-js/faker';
 import { readMoney, cityName } from '@samjuk/e2e-m2-playwright-core';
 import { hyvaTest as test, expect } from '../fixtures';

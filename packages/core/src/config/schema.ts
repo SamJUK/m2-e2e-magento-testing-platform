@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 // Shell hooks let projects plug in however they exec into their container.
 // Each hook is optional, EXCEPT where db.strategy needs it: 'dump-restore'
 // requires dbDump, dbImport and dbQuery, and 's3-import' requires dbImport.

@@ -1,4 +1,8 @@
 <?php
+
+// Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+// SPDX-License-Identifier: OSL-3.0
+
 /**
  * Written to var/ and executed by the E2E global setup. Not part of the store.
  * Configuration arrives base64-encoded in E2E_SEED_JSON so no value in it can

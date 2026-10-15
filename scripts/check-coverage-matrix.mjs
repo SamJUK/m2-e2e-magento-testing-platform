@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * docs/COVERAGE.md claims a set of tests is implemented. This asserts that
  * claim against the specs on disk, in both directions: a test that ships
  * without a matrix row is undocumented, and a matrix row without a test is a

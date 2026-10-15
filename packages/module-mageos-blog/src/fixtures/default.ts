@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * The composition point for this package's own specs.
  *
  * Imported relatively, not through a `#test` alias: a published package's
