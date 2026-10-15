@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * Every key in selectors.json is a promise: set it and the suite will use it.
  * A key nothing reads breaks that promise silently — a store overrides it,
  * nothing changes, and the selector it was meant to fix stays hardcoded in a

@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * Why a store excludes one of the shared tests.
  *
  * `grepInvert` on its own flattens three very different situations into one

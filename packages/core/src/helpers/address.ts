@@ -1,4 +1,9 @@
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * A city name Magento will accept, from any faker locale.
  *
  * Magento validates the city field against `A-Z a-z 0-9 - ' space` and rejects

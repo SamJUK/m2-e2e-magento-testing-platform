@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 import { faker } from '@faker-js/faker';
 import { waitForFormKey } from '@samjuk/e2e-m2-playwright-core';
 import { lumaTest as test, expect } from '../fixtures';

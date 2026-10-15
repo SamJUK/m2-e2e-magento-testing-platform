@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+# SPDX-License-Identifier: OSL-3.0
+
 # One entrypoint for the E2E stack, used identically by a developer and by CI.
 #
 #   tests/docker/run.sh up   luma|hyva|mageos   boot the stack and install Magento

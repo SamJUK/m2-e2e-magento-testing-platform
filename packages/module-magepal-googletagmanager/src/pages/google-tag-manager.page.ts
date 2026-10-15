@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 import { expect, type Page } from '@playwright/test';
 import { deepMerge, type MergedData } from '@samjuk/e2e-m2-playwright-core';
 import moduleFixtures from '../data/fixtures.json';

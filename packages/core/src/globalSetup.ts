@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 import type { ProjectConfig } from './config/schema';
 import { runSeed } from './seed/magento';
 import { dumpDatabase } from './db/dump';

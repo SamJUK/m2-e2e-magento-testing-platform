@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 import { expect, type Locator, type Page } from '@playwright/test';
 import { sprintf, waitForFormKey, type MergedData } from '@samjuk/e2e-m2-playwright-core';
 import type { IReviewPage, ProductReview } from './types';

@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
 import { test as base } from '@playwright/test';
 import { Mailpit } from '../helpers/mailpit';
 import { loadData, type MergedData } from '../data';

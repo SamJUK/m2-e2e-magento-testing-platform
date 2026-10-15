@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+ * SPDX-License-Identifier: OSL-3.0
+ */
+
+/**
  * Scaffolds either the E2E suite into a Magento store, or a module test
  * package for people extending the platform with their own tests.
  *

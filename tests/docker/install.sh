@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright (c) 2026 Sam James. Licensed under the Open Software License version 3.0.
+# SPDX-License-Identifier: OSL-3.0
+
 # Installs Magento into the stack. Idempotent: re-running against an installed
 # store is a no-op unless FORCE_REINSTALL=1.
 #
