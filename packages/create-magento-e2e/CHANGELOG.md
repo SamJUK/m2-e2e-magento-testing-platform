@@ -1,5 +1,11 @@
 # @samjuk/create-magento-e2e
 
+## 0.1.2
+
+### Patch Changes
+
+- 0e40c65: Ship a NOTICE file in every package and an OSL-3.0 header in every source file.
+
 ## 0.1.1
 
 ### Patch Changes
