@@ -1,5 +1,5 @@
 ---
-'@samjuk/e2e-m2-playwright-core': major
+'@samjuk/e2e-m2-playwright-core': minor
 ---
 
 Refuse to run when the configured DB strategy has no shell hooks for it.
