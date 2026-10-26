@@ -194,6 +194,12 @@ export function dockerComposeShell(options: DockerComposeShellOptions): ProjectS
   ];
   const compose = (args: string[]) => ['compose', ...composeFlags, ...args];
   const mysqlArgs = [`-u${user}`, `-p${password}`, database];
+  // MariaDB 11 images ship only `mariadb` and `mariadb-dump`; MySQL and Percona only `mysql` and `mysqldump`.
+  const dbClient = (mariadb: string, mysql: string, args: string[]) =>
+    compose([
+      'exec', '-T', dbService, 'sh', '-c',
+      `exec "$(command -v ${mariadb} || command -v ${mysql})" "$@"`, 'sh', ...args,
+    ]);
 
   return {
     exec: async (cmd) => {
@@ -206,18 +212,18 @@ export function dockerComposeShell(options: DockerComposeShellOptions): ProjectS
     dbDump: async (outPath) => {
       await run(
         'docker',
-        compose(['exec', '-T', dbService, 'mysqldump', '--no-tablespaces', ...mysqlArgs]),
+        dbClient('mariadb-dump', 'mysqldump', ['--no-tablespaces', ...mysqlArgs]),
         cwd,
         { stdoutFile: outPath },
       );
     },
     dbImport: async (inPath) => {
-      await run('docker', compose(['exec', '-T', dbService, 'mysql', ...mysqlArgs]), cwd, {
+      await run('docker', dbClient('mariadb', 'mysql', mysqlArgs), cwd, {
         stdinFile: inPath,
       });
     },
     dbQuery: (sql) =>
-      run('docker', compose(['exec', '-T', dbService, 'mysql', ...mysqlArgs]), cwd, {
+      run('docker', dbClient('mariadb', 'mysql', mysqlArgs), cwd, {
         input: sql,
         captureStdout: true,
       }),
