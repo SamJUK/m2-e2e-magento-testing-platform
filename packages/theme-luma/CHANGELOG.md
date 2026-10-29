@@ -1,5 +1,12 @@
 # @samjuk/e2e-m2-theme-luma
 
+## 0.2.1
+
+### Patch Changes
+
+- 1a6355b: Wait for Luma's customer-data and messages JS before submitting storefront forms, fixing intermittently missing
+  success messages ("You saved the address.", "We have saved your subscription.").
+
 ## 0.2.0
 
 ### Minor Changes

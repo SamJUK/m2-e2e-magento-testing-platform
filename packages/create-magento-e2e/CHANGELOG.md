@@ -1,5 +1,11 @@
 # @samjuk/create-magento-e2e
 
+## 0.1.3
+
+### Patch Changes
+
+- 1a6355b: Scaffold against the 0.2 packages instead of 0.1.
+
 ## 0.1.2
 
 ### Patch Changes
