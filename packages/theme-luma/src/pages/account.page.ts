@@ -7,11 +7,11 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import {
   resetFormKey,
   sprintf,
-  waitForFormKey,
   setCheckbox,
   setSelect,
   type MergedData,
 } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type {
   IAccountPage,
   IForgotPasswordPage,
@@ -87,7 +87,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.login, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.loginEmailField.fill(credentials.email, { force: true });
     await this.loginPasswordField.fill(credentials.password, { force: true });
     await this.signInButton.click();
@@ -119,7 +119,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.login, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     // Magento's mage/validation widget is loaded by RequireJS and binds well
     // after the form is rendered. jQuery Validate stamps `novalidate` on the
     // form as it initialises, handing validation from the browser to itself;
@@ -157,7 +157,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.login, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.loginEmailField.fill(credentials.email, { force: true });
     await this.loginPasswordField.fill(credentials.password, { force: true });
     await this.signInButton.click();
@@ -308,7 +308,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.changePassword, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     const form = this.page.locator(s.formSelector);
     await form.getByLabel(s.currentPasswordFieldLabel, { exact: true }).fill(currentPassword);
@@ -358,7 +358,7 @@ export class AccountPage implements IAccountPage {
     // on a 90s wait three attempts running in CI before the wait itself was
     // ever the problem. `deleteAddress` has the same shape for the same
     // reason.
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     const reorderLink = row.getByRole('link', { name: s.reorderLinkLabel, exact: true });
     await expect(async () => {
@@ -390,7 +390,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.guestOrderLookup, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     const form = this.page.locator(s.formSelector);
     await form.getByLabel(s.orderIdFieldLabel, { exact: true }).fill(order.orderNumber);
@@ -439,7 +439,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.editAccount, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     const form = this.page.locator(s.formSelector);
     const emailField = form.getByLabel(s.emailFieldLabel, { exact: true });
@@ -488,7 +488,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.editAccount, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     const form = this.page.locator(s.formSelector);
     const emailField = form.getByLabel(s.emailFieldLabel, { exact: true });
@@ -596,7 +596,7 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.newsletter, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     const form = this.page.locator(s.formSelector);
     const checkbox = form.locator(s.subscriptionCheckboxSelector);
@@ -644,7 +644,7 @@ export class ForgotPasswordPage implements IForgotPasswordPage {
     await this.page.goto(this.data.slugs.account.forgotPassword, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.emailField.fill(email);
     await this.submitButton.click();
     // Success redirects away from the forgot-password form; the POST can take
@@ -675,7 +675,7 @@ export class ForgotPasswordPage implements IForgotPasswordPage {
   async setNewPassword(resetUrl: string, newPassword: string): Promise<void> {
     const s = this.data.selectors.resetPasswordPage;
     await this.page.goto(resetUrl, { waitUntil: 'domcontentloaded' });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     const form = this.page.locator(s.formSelector);
     await form.getByLabel(s.newPasswordFieldLabel, { exact: true }).fill(newPassword);
@@ -766,7 +766,7 @@ export class RegisterPage implements IRegisterPage {
     await this.page.goto(this.data.slugs.account.register, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.firstNameField.fill(credentials.firstName);
     await this.lastNameField.fill(credentials.lastName);
     await this.emailField.fill(credentials.email);
@@ -805,7 +805,7 @@ export class RegisterPage implements IRegisterPage {
     await this.page.goto(this.data.slugs.account.register, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.firstNameField.fill(credentials.firstName);
     await this.lastNameField.fill(credentials.lastName);
     await this.emailField.fill(credentials.email);
@@ -835,7 +835,7 @@ export class RegisterPage implements IRegisterPage {
    * stranger to it.
    */
   async completeRegistration(credentials: RegisterCredentials): Promise<void> {
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.firstNameField.fill(credentials.firstName);
     await this.lastNameField.fill(credentials.lastName);
     await this.emailField.fill(credentials.email);

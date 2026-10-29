@@ -4,7 +4,8 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { sprintf, waitForFormKey, type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { sprintf, type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { IReviewPage, ProductReview } from './types';
 
 export type { ProductReview };
@@ -93,7 +94,7 @@ export class ReviewPage implements IReviewPage {
   async submitReview(url: string, review: ProductReview): Promise<void> {
     const s = this.data.selectors.reviewForm;
     await this.page.goto(url, { waitUntil: 'domcontentloaded' });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.openReviewForm();
 
     const rating = this.form.locator(sprintf(s.ratingSelector, String(review.stars)));

@@ -4,7 +4,8 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { waitForFormKey, type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { IWishlistPage } from './types';
 
 /**
@@ -49,7 +50,7 @@ export class WishlistPage implements IWishlistPage {
    */
   async open(): Promise<void> {
     await this.page.goto(this.data.slugs.wishlist, { waitUntil: 'domcontentloaded' });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.page.waitForFunction(
       () => {
         const jquery = (window as unknown as { jQuery?: (element: Element) => { data(key: string): unknown } })
@@ -95,7 +96,7 @@ export class WishlistPage implements IWishlistPage {
     // and nothing happens at all. Retry the whole click → POST → message cycle.
     await expect(async () => {
       await this.page.goto(url, { waitUntil: 'domcontentloaded' });
-      await waitForFormKey(this.page);
+      await waitForPageScripts(this.page);
       // Hyvä defers the button's Alpine component until it intersects.
       await this.addToWishlistControl.scrollIntoViewIfNeeded();
 
@@ -133,7 +134,7 @@ export class WishlistPage implements IWishlistPage {
     // the redirect never arrives however many times it is clicked.
     await expect(async () => {
       await this.page.goto(url, { waitUntil: 'domcontentloaded' });
-      await waitForFormKey(this.page);
+      await waitForPageScripts(this.page);
       await this.addToWishlistControl.scrollIntoViewIfNeeded();
       await expect(
         this.addToWishlistControl,

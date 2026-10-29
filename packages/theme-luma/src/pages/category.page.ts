@@ -7,9 +7,9 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import {
   readAllMoney,
   sprintf,
-  waitForFormKey,
   type MergedData,
 } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { ICategoryPage } from './types';
 
 export enum Currency {
@@ -289,7 +289,7 @@ export class CategoryPage implements ICategoryPage {
     // booting". Waiting for the form key first proves Magento's JS has
     // executed at all; re-selecting covers the window between that and the
     // toolbar's own binding.
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await expect(async () => {
       await this.limiterDropdown.selectOption(limit);
       await this.page.waitForURL((url) => url.toString() !== before, {
@@ -348,7 +348,7 @@ export class CategoryPage implements ICategoryPage {
    * nothing at all.
    */
   async changeCurrency(currency: Currency): Promise<void> {
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await expect(async () => {
       await this.page.locator('[id="switcher-currency-trigger"]').click();
       const posted = this.page.waitForResponse(
