@@ -4,7 +4,7 @@
  */
 
 import { faker } from '@faker-js/faker';
-import { waitForFormKey } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import { lumaTest as test, expect } from '../fixtures';
 import { MailpitQuery } from '../index';
 
@@ -27,7 +27,7 @@ test.describe('Homepage', () => {
       await page.waitForLoadState('networkidle');
       // FPC-cached pages render a stale form_key input; submitting before
       // mage/common rewrites it from the cookie fails with "Invalid Form Key".
-      await waitForFormKey(page);
+      await waitForPageScripts(page);
 
       const email = faker.internet.email();
       await page.getByLabel(data.selectors.newsletter.emailFieldLabel).fill(email);

@@ -4,7 +4,8 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { type MergedData, waitForFormKey, tamperFormKey } from '@samjuk/e2e-m2-playwright-core';
+import { type MergedData, tamperFormKey } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { IContactPage } from './types';
 
 export class ContactPage implements IContactPage {
@@ -46,6 +47,7 @@ export class ContactPage implements IContactPage {
 
   async sendContactForm(): Promise<void> {
     await this.fillForm();
+    await waitForPageScripts(this.page);
     await this.sendFormButton.click();
 
     await expect(
@@ -108,13 +110,13 @@ export class ContactPage implements IContactPage {
   /**
    * Submits the contact form carrying a form key the session never issued.
    *
-   * `waitForFormKey` runs FIRST on purpose: on a full-page-cached store
+   * `waitForPageScripts` runs FIRST on purpose: on a full-page-cached store
    * `mage/common` rewrites every rendered form_key input from the cookie on
    * DOM ready, so tampering before that lands would simply be undone.
    */
   async expectContactFormIsRejectedForInvalidFormKey(): Promise<void> {
     await this.fillForm();
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await tamperFormKey(this.page);
     await this.sendFormButton.click();
 

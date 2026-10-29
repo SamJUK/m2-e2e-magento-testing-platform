@@ -4,7 +4,8 @@
  */
 
 import { expect, type Dialog, type Locator, type Page } from '@playwright/test';
-import { waitForFormKey, type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { IComparePage } from './types';
 
 export class ComparePage implements IComparePage {
@@ -59,7 +60,7 @@ export class ComparePage implements IComparePage {
   async addFromProductPage(url: string, productTitle: string): Promise<void> {
     await expect(async () => {
       await this.page.goto(url, { waitUntil: 'domcontentloaded' });
-      await waitForFormKey(this.page);
+      await waitForPageScripts(this.page);
       // Hyvä defers the button's Alpine component until it intersects.
       await this.addToCompareControl.scrollIntoViewIfNeeded();
 

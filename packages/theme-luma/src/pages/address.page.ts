@@ -4,7 +4,8 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { sprintf, waitForFormKey, type MergedData, setCheckbox } from '@samjuk/e2e-m2-playwright-core';
+import { sprintf, type MergedData, setCheckbox } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { IAddressBookPage, CustomerAddress } from './types';
 
 export type { CustomerAddress };
@@ -135,7 +136,7 @@ export class AddressBookPage implements IAddressBookPage {
     await this.page.goto(this.data.slugs.account.addressNew, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     // Magento's mage/validation widget is loaded by RequireJS and binds well
     // after the form is rendered. jQuery Validate stamps `novalidate` on the
@@ -177,7 +178,7 @@ export class AddressBookPage implements IAddressBookPage {
     await this.page.goto(this.data.slugs.account.addressNew, {
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await this.fillForm(address);
 
     if (options.makeDefault) {
@@ -230,7 +231,7 @@ export class AddressBookPage implements IAddressBookPage {
       timeout: 45_000,
       waitUntil: 'domcontentloaded',
     });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     // The address edit page is uncacheable and renders the full region JSON,
     // so it routinely takes >10s to appear on a dev-mode store.
     await expect(this.form).toBeVisible({ timeout: 30_000 });
@@ -245,7 +246,7 @@ export class AddressBookPage implements IAddressBookPage {
     const f = this.data.fixtures.account.addressBook;
 
     await this.open();
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     const row = this.additionalAddressesTable.locator('tbody tr', { hasText: streetAddress });
     await expect(row).toHaveCount(1);
     // The delete handler is bound by a widget that initialises after the form

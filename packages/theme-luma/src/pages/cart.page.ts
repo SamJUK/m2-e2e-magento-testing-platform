@@ -4,7 +4,8 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { readMoney, waitForFormKey, type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { readMoney, type MergedData } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { ICartPage } from './types';
 
 export class CartPage implements ICartPage {
@@ -169,7 +170,7 @@ export class CartPage implements ICartPage {
     // looks exactly like a store that refused the removal. Retry on the POST
     // rather than on the line disappearing, so only a click that did nothing
     // is repeated and a slow delete is never sent twice.
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
     await expect(async () => {
       if ((await this.getProductRow(productTitle).count()) === 0) return;
 

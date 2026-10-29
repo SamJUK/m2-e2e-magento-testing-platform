@@ -4,7 +4,8 @@
  */
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import { readMoney, waitForFormKey, type MergedData , sprintf } from '@samjuk/e2e-m2-playwright-core';
+import { readMoney, type MergedData , sprintf } from '@samjuk/e2e-m2-playwright-core';
+import { waitForPageScripts } from '../helpers/page-scripts';
 import type { IProductPage, StockStatus } from './types';
 
 export class ProductPage implements IProductPage {
@@ -134,7 +135,7 @@ export class ProductPage implements IProductPage {
   }
   async addSimpleProductToCart(url: string, quantity?: number): Promise<void> {
     await this.page.goto(url);
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     if (quantity) {
       await this.quantityField.fill(String(quantity));
@@ -179,7 +180,7 @@ export class ProductPage implements IProductPage {
     quantity?: number,
   ): Promise<void> {
     await this.page.goto(url);
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     if (quantity) {
       await this.quantityField.fill(String(quantity));
@@ -208,7 +209,7 @@ export class ProductPage implements IProductPage {
    */
   async openBundleOptions(url: string): Promise<void> {
     await this.page.goto(url, { waitUntil: 'domcontentloaded' });
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     await expect(async () => {
       if (!(await this.bundleOptionLabels.first().isVisible())) {
@@ -280,7 +281,7 @@ export class ProductPage implements IProductPage {
     options: Record<string, string>,
   ): Promise<void> {
     await this.page.goto(url);
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     for (const [title, value] of Object.entries(options)) {
       await this.page.getByLabel(optionLabelPattern(title)).first().fill(value);
@@ -302,7 +303,7 @@ export class ProductPage implements IProductPage {
     requiredOptionTitle: string,
   ): Promise<void> {
     await this.page.goto(url);
-    await waitForFormKey(this.page);
+    await waitForPageScripts(this.page);
 
     let requested = false;
     const watch = (request: { method: () => string; url: () => string }) => {
