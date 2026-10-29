@@ -1,6 +1,6 @@
 {
   "name": "@samjuk/e2e-m2-theme-luma",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Luma theme page objects and fixtures for Magento 2 E2E testing",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
