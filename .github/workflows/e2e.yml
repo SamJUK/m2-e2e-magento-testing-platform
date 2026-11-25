@@ -102,7 +102,8 @@ jobs:
   suite:
     name: ${{ matrix.target }}
     needs: prepare
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: it moved to 26.04, which Playwright 1.58 cannot install Chromium on.
+    runs-on: ubuntu-24.04
     # Booting Magento plus 95 tests on one worker. Measured: 20 to 31 minutes
     # per target, so this is headroom, not an estimate.
     timeout-minutes: 90
