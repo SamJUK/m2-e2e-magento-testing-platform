@@ -24,7 +24,7 @@
   },
   "accountOverviewPage": {
     "menuTriggerSelector": "#customer-menu",
-    "customerMenuSelector": "nav[aria-labelledby=\"customer-menu\"]",
+    "customerMenuSelector": "#customer-menu + nav",
     "accountInformationBlock": "h3:has-text(\"Contact Information\") + p",
     "logoutButtonLabel": "Sign Out"
   },
