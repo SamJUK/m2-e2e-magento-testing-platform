@@ -21,9 +21,10 @@ export interface ProjectShellHooks {
   /** Import a database from a local file path */
   dbImport?: (inPath: string) => Promise<void>;
   /**
-   * Run a SQL statement against the Magento database and return stdout.
-   * Used by the dirty-run guard (dump-restore strategy) to track incomplete
-   * runs via the Magento `flag` table. Required by 'dump-restore'.
+   * Run SQL against the Magento database and return stdout. Required by 'dump-restore'.
+   * Used by the dirty-run guard, the config snapshot, and the seed's config
+   * writes, which send several statements, one per line; if that throws, the
+   * seed falls back to config:set.
    */
   dbQuery?: (sql: string) => Promise<string>;
 }

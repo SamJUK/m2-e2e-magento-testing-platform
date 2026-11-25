@@ -59,6 +59,33 @@ function quote(value: string): string {
 }
 
 /**
+ * Writes default-scope values in one upsert, where `config:set` would boot Magento once per value. Like the restore,
+ * it skips backend models. Returns false when there is no `dbQuery` hook, or it refused several statements in one call.
+ */
+export async function writeConfigValues(
+  config: ProjectConfig,
+  values: { path: string; value: string }[],
+): Promise<boolean> {
+  if (!config.shell?.dbQuery || values.length === 0) return false;
+  // One statement per value: a multi-row upsert needs VALUES(), which MySQL 8.0.20+ deprecates and MariaDB has no
+  // replacement for.
+  try {
+    await config.shell.dbQuery(values.map(({ path: p, value }) => `${upsert(config, p, value)};`).join('\n'));
+  } catch (error) {
+    console.warn(`[e2e-core] shell.dbQuery could not write the seed config, so it goes through config:set: ${error}`);
+    return false;
+  }
+  return true;
+}
+
+function upsert(config: ProjectConfig, configPath: string, value: string): string {
+  return (
+    `INSERT INTO ${table(config)} (scope, scope_id, path, value) ` +
+    `VALUES ('default', 0, ${quote(configPath)}, ${quote(value)}) ON DUPLICATE KEY UPDATE value=${quote(value)}`
+  );
+}
+
+/**
  * Parses the mysql CLI's tab-separated output.
  *
  * A literal `NULL` is how the client renders a SQL NULL, and is not the same as
@@ -152,11 +179,7 @@ export async function restoreConfigSnapshot(config: ProjectConfig): Promise<bool
     } else {
       // INSERT ... ON DUPLICATE KEY UPDATE rather than UPDATE: the seed may
       // have created the row itself, in which case there is nothing to update.
-      await config.shell.dbQuery(
-        `INSERT INTO ${table(config)} (scope, scope_id, path, value) ` +
-          `VALUES ('default', 0, ${quote(configPath)}, ${quote(value)}) ` +
-          `ON DUPLICATE KEY UPDATE value=${quote(value)}`,
-      );
+      await config.shell.dbQuery(upsert(config, configPath, value));
     }
   }
 

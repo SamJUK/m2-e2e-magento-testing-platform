@@ -35,8 +35,9 @@ test.describe('MagePal_GoogleTagManager data layer', () => {
     'a product page pushes the product sku, name and price the store declares',
     { tag: ['@magepal-googletagmanager', '@analytics', '@product', '@smoke'] },
     async ({ googleTagManager, data }) => {
-      const product = data.fixtures.product.adminEditable;
-      await googleTagManager.expectProductPush(data.slugs.products.adminEditableProduct, {
+      // Not adminEditable: the admin rename test changes that one's name mid-run.
+      const product = data.fixtures.product.virtual;
+      await googleTagManager.expectProductPush(data.slugs.products.virtualProduct, {
         sku: product.sku,
         name: product.title,
         price: product.price,

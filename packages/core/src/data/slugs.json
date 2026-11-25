@@ -25,6 +25,8 @@
     "outOfStockProduct": "/e2e-out-of-stock.html",
     "adminEditableProductComment": "PDP of the product the admin edit-and-save test renames. Must match fixtures.product.adminEditable.urlKey plus the store's catalog/seo/product_url_suffix. Renaming a product does not regenerate its URL key, so this stays valid while the test holds the temporary name.",
     "adminEditableProduct": "/e2e-admin-edit.html",
+    "adminUrlKeyProductComment": "PDP of the product the admin URL key test edits. Must match fixtures.product.adminUrlKey.urlKey plus the store's catalog/seo/product_url_suffix.",
+    "adminUrlKeyProduct": "/e2e-admin-url-key.html",
     "customOptionsProduct": "/e2e-custom-options.html",
     "virtualProductComment": "PDP of the virtual product the seed creates. Must match fixtures.product.virtual.urlKey plus the store's catalog/seo/product_url_suffix.",
     "virtualProduct": "/e2e-virtual.html",

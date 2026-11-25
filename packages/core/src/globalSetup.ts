@@ -24,7 +24,8 @@ import { usesConfigSnapshot } from './seed/magento';
  *     await runGlobalSetup(config)
  *   }
  */
-export async function runGlobalSetup(config: ProjectConfig): Promise<void> {
+/** Pass `workers` (FullConfig.workers) to give each worker its own admin user. */
+export async function runGlobalSetup(config: ProjectConfig, workers = 1): Promise<void> {
   console.log('[e2e-core] Global setup starting...');
 
   // Free and instant, so ahead of the network check below.
@@ -75,7 +76,7 @@ export async function runGlobalSetup(config: ProjectConfig): Promise<void> {
     }
   }
 
-  await runSeed(config);
+  await runSeed(config, workers);
 
   console.log('[e2e-core] Global setup complete.');
 }

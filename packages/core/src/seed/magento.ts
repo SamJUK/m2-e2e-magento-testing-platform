@@ -5,7 +5,7 @@
 
 import type { ProjectConfig } from '../config/schema';
 import { seedFixtureEntities } from './fixture-entities';
-import { takeConfigSnapshot } from './config-snapshot';
+import { takeConfigSnapshot, writeConfigValues } from './config-snapshot';
 
 // Disable 2FA modules (prevents login redirect loops in tests).
 //
@@ -45,6 +45,8 @@ const TWO_FACTOR_DISABLE_COMMANDS = [
 export interface SeedConfigValue {
   path: string;
   value: string;
+  /** Always through config:set, for a value whose backend model must be able to refuse it. */
+  validate?: true;
 }
 
 // Config the seed writes that leaves the store measurably LESS secure.
@@ -95,9 +97,13 @@ const FUNCTIONAL_CONFIG: SeedConfigValue[] = [
   { path: 'payment/checkmo/title', value: 'Check Money Order' },
 
   // EUR for the currency-switch tests. USD must stay in the list — excluding
-  // the default display currency makes config:set reject the value.
-  { path: 'currency/options/allow', value: 'USD,GBP,EUR' },
+  // the default display currency makes config:set reject the value, which
+  // leaves a store with another display currency as it was.
+  { path: 'currency/options/allow', value: 'USD,GBP,EUR', validate: true },
   { path: 'currency/options/installed', value: 'USD,GBP,EUR' },
+
+  // On by default. Loads Adobe's remote script, which pops a tour over the admin for every new admin user.
+  { path: 'admin/usage/enabled', value: '0' },
 ];
 
 /** Every default-scope path the seed writes, in the order it writes them. */
@@ -130,6 +136,22 @@ const NON_CONFIG_COMMANDS = [
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
 }
+
+// Braced so a hook that prefixes the command (`cd /app && ${cmd}`) applies to every job.
+function parallel(commands: string[]): string {
+  return `{ ${commands.map((cmd) => `(${cmd}) &`).join(' ')} wait; }`;
+}
+
+/**
+ * One admin per Playwright worker, so their sessions and saved grid filters stay apart.
+ * createPlaywrightConfig switches each worker to its own, named the same way.
+ */
+function adminNames(username: string, workers: number): string[] {
+  if (workers <= 1) return [username];
+  return [username, ...Array.from({ length: workers }, (_, i) => `${username}-${i}`)];
+}
+
+export const ADMIN_PER_WORKER_ENV = 'E2E_ADMIN_PER_WORKER';
 
 /** `config:set` for one seed value, quoted so the shell reads it literally. */
 function configCommand({ path, value }: SeedConfigValue): string {
@@ -186,7 +208,7 @@ export function usesConfigSnapshot(config: ProjectConfig): boolean {
  * Runs Magento CLI commands via the project's shell.exec hook.
  * No-ops gracefully if shell.exec is not configured.
  */
-export async function runSeed(config: ProjectConfig): Promise<void> {
+export async function runSeed(config: ProjectConfig, workers = 1): Promise<void> {
   if (!config.shell?.exec) {
     console.log('[e2e-core] No shell.exec hook configured, skipping Magento seed.');
     return;
@@ -200,14 +222,22 @@ export async function runSeed(config: ProjectConfig): Promise<void> {
   // is_active back on. It leaves a lockout from earlier failed logins in
   // place, so unlock as well. Both are core commands; there is no core
   // admin:user:delete (that one is n98-magerun2's).
-  const { username, password, slug: _slug } = config.admin;
+  // admin:user:create resets an existing user's password and is_active, but not a lockout.
+  const { username, password } = config.admin;
   await config.shell.exec(
-    `php bin/magento admin:user:create ` +
-    `--admin-email='playwright-tests@example.com' ` +
-    `--admin-firstname='Playwright' --admin-lastname='Tests' ` +
-    `--admin-user=${shellQuote(username)} --admin-password=${shellQuote(password)} || true`,
+    parallel(
+      adminNames(username, workers).map(
+        (name, i) =>
+          `php bin/magento admin:user:create ` +
+          `--admin-email=${shellQuote(i ? `playwright-tests-${i}@example.com` : 'playwright-tests@example.com')} ` +
+          `--admin-firstname='Playwright' --admin-lastname='Tests' ` +
+          `--admin-user=${shellQuote(name)} --admin-password=${shellQuote(password)} || true; ` +
+          `php bin/magento admin:user:unlock ${shellQuote(name)} || true`,
+      ),
+    ),
   );
-  await config.shell.exec(`php bin/magento admin:user:unlock ${shellQuote(username)} || true`);
+  // Workers are forked after global setup, so they inherit this.
+  if (workers > 1) process.env[ADMIN_PER_WORKER_ENV] = username;
 
   // Record what these paths hold before touching them, so teardown can put
   // them back on a store the database strategy will not restore.
@@ -215,9 +245,18 @@ export async function runSeed(config: ProjectConfig): Promise<void> {
     await takeConfigSnapshot(config, SEED_CONFIG_PATHS);
   }
 
+  const seedConfig = [...SECURITY_RELAXING_CONFIG, ...FUNCTIONAL_CONFIG];
+  const written = await writeConfigValues(
+    config,
+    seedConfig.filter((value) => !value.validate),
+  );
+  for (const value of seedConfig) {
+    if (!written || value.validate) await config.shell.exec(configCommand(value));
+  }
+  // config:set cleans the config cache when it saves; the direct write doesn't, and seed.commands may read these.
+  if (written) await config.shell.exec('php bin/magento cache:clean config');
+
   const commands = [
-    ...SECURITY_RELAXING_CONFIG.map(configCommand),
-    ...FUNCTIONAL_CONFIG.map(configCommand),
     ...NON_CONFIG_COMMANDS,
     'php bin/magento cache:flush',
   ];

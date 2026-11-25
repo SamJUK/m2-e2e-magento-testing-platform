@@ -117,6 +117,13 @@
       "title": "E2E Admin Edit Product",
       "price": 24.99
     },
+    "adminUrlKeyComment": "Only for the admin URL key test, which changes this product's URL and puts it back. Kept apart from adminEditable so the two admin tests never edit the same product at once.",
+    "adminUrlKey": {
+      "sku": "e2e-admin-url-key",
+      "urlKey": "e2e-admin-url-key",
+      "title": "E2E Admin URL Key Product",
+      "price": 22.5
+    },
     "outOfStockComment": "A deterministic out-of-stock product. The seed creates it (see seed/fixture-entities.ts) rather than relying on a sample-data SKU happening to be unsellable; `sku`, `urlKey`, `title` and `price` are what the seed writes, so overriding them here points BOTH the seed and the tests at a different product. A store that already has a permanently out-of-stock SKU can point these at it and set `seed.createFixtureEntities: false`.",
     "outOfStock": {
       "sku": "e2e-out-of-stock",
