@@ -1,5 +1,12 @@
 # @samjuk/e2e-m2-module-opengento-gdpr
 
+## 0.3.0
+
+### Patch Changes
+
+- Updated dependencies [257c725]
+  - @samjuk/e2e-m2-playwright-core@0.3.0
+
 ## 0.2.0
 
 ### Patch Changes
