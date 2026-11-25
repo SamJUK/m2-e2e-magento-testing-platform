@@ -69,6 +69,12 @@ export async function seedFixtureEntities(config: ProjectConfig): Promise<void> 
         name: fixtures.product.adminEditable.title,
         price: fixtures.product.adminEditable.price,
       },
+      adminUrlKey: {
+        sku: fixtures.product.adminUrlKey.sku,
+        urlKey: fixtures.product.adminUrlKey.urlKey,
+        name: fixtures.product.adminUrlKey.title,
+        price: fixtures.product.adminUrlKey.price,
+      },
       adminOrderable: {
         sku: fixtures.product.adminOrderable.sku,
         urlKey: fixtures.product.adminOrderable.urlKey,

@@ -507,6 +507,16 @@ $editableProduct = $upsertProduct([
 ], true);
 printf("[e2e-seed] admin-editable product #%d %s (url key: %s)\n", (int) $editableProduct->getId(), $editableProduct->getSku(), $editableProduct->getUrlKey());
 
+// The URL key test's own product, so it never edits the one the rename test is renaming.
+$urlKey = $cfg['adminUrlKey'] ?? [];
+$urlKeyProduct = $upsertProduct([
+    'sku' => $urlKey['sku'] ?? 'e2e-admin-url-key',
+    'name' => $urlKey['name'] ?? 'E2E Admin URL Key Product',
+    'urlKey' => $urlKey['urlKey'] ?? 'e2e-admin-url-key',
+    'price' => $urlKey['price'] ?? 22.5,
+], true);
+printf("[e2e-seed] admin URL key product #%d %s (url key: %s)\n", (int) $urlKeyProduct->getId(), $urlKeyProduct->getSku(), $urlKeyProduct->getUrlKey());
+
 // Dedicated again, this time so the admin order-creation tests have something
 // to sell that nothing else depends on. Every order they place consumes stock,
 // and pointing them at the sample-data simple product would slowly drain the

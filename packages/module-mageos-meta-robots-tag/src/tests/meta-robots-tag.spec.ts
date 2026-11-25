@@ -75,15 +75,15 @@ test.describe('MageOS_MetaRobotsTag', () => {
     },
   );
 
-  // Catalog observer, product branch. Uses the throwaway product the seed
-  // maintains for admin edits, never the simple product the cart and checkout
-  // suites depend on.
+  // Catalog observer, product branch. Uses the virtual product, not the simple
+  // product the cart and checkout suites depend on, nor adminEditable: the rename
+  // test saves that one too, and a product save posts the whole form.
   test(
     'a product flagged No follow renders NOFOLLOW on its PDP',
     { tag: ['@mageos-meta-robots-tag', '@seo', '@product'] },
     async ({ metaRobotsTag, data }) => {
-      const sku = data.fixtures.product.adminEditable.sku;
-      const pdp = data.slugs.products.adminEditableProduct;
+      const sku = data.fixtures.product.virtual.sku;
+      const pdp = data.slugs.products.virtualProduct;
       try {
         await metaRobotsTag.setProductFlags(sku, { no_follow: true });
         await metaRobotsTag.expectRobots(pdp, ['INDEX', 'NOFOLLOW']);

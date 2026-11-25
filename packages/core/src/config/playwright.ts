@@ -8,6 +8,7 @@ import path from 'path';
 import { defineConfig, devices, type PlaywrightTestConfig } from '@playwright/test';
 import type { ProjectConfig } from './schema';
 import { buildGrepInvert, reportExclusions, type TestExclusion } from './exclusions';
+import { ADMIN_PER_WORKER_ENV } from '../seed/magento';
 
 interface AutoDiscoveredModule {
   name: string;
@@ -237,6 +238,11 @@ export function createPlaywrightConfig(
     process.env.PLAYWRIGHT_ADMIN_SLUG ??= config.admin.slug;
     process.env.PLAYWRIGHT_ADMIN_USERNAME ??= config.admin.username;
     process.env.PLAYWRIGHT_ADMIN_PASSWORD ??= config.admin.password;
+  }
+  // Set by the seed when it made an admin per worker. TEST_PARALLEL_INDEX is 0..workers-1.
+  const perWorkerAdmin = process.env[ADMIN_PER_WORKER_ENV];
+  if (perWorkerAdmin && process.env.TEST_PARALLEL_INDEX !== undefined) {
+    process.env.PLAYWRIGHT_ADMIN_USERNAME = `${perWorkerAdmin}-${process.env.TEST_PARALLEL_INDEX}`;
   }
 
   reportExclusions(exclusions);

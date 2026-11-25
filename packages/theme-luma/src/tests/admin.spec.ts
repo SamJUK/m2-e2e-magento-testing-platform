@@ -220,10 +220,10 @@ test.describe('Admin > Catalog > URL rewrites', () => {
       // Two admin saves, each re-opening the grid, plus two raw requests.
       test.slow();
 
-      const product = data.fixtures.product.adminEditable;
+      const product = data.fixtures.product.adminUrlKey;
       const newUrlKey = `${product.urlKey}-${faker.string.alphanumeric(8).toLowerCase()}`;
       // Stores set catalog/seo/product_url_suffix to anything, empty included.
-      const suffix = data.slugs.products.adminEditableProduct.slice(
+      const suffix = data.slugs.products.adminUrlKeyProduct.slice(
         `/${product.urlKey}`.length,
       );
 
@@ -233,7 +233,7 @@ test.describe('Admin > Catalog > URL rewrites', () => {
         product.sku,
         product.title,
         newUrlKey,
-        data.slugs.products.adminEditableProduct,
+        data.slugs.products.adminUrlKeyProduct,
         suffix,
       );
 
