@@ -118,10 +118,12 @@ interface ProjectConfig {
     exec?: (cmd: string) => Promise<void>;      // Run cmd in Magento container
     dbDump?: (outPath: string) => Promise<void>;
     dbImport?: (inPath: string) => Promise<void>;
+    capture?: (cmd: string) => Promise<string>; // Run cmd, return stdout; the presets set it
   };
   excludeModules?: string[];     // NPM module packages to exclude from discovery
   appCodeDir?: string | false;   // Path to app/code/, false to disable, omit for auto-detect
   blockedHosts?: string[];       // Third-party hosts failed in DNS; default DEFAULT_BLOCKED_HOSTS, [] for none
+  failOnExceptions?: boolean;    // Fail the run on new var/log/exception.log entries; default false
 }
 ```
 
@@ -136,6 +138,16 @@ blockedHosts: [...DEFAULT_BLOCKED_HOSTS.filter((h) => h !== 'trustpilot.com'), '
 `[]` blocks nothing. `E2E_BLOCK_THIRD_PARTY=0` turns blocking off for one run and `E2E_BLOCK_EXTRA_HOSTS=foo.com,bar.io` adds hosts. Each entry covers the host and its subdomains.
 
 The block is Chromium's `--host-resolver-rules` launch flag, so it applies only to Chromium that Playwright launches itself: not Firefox or WebKit, not a remote browser (`connectOptions`), and not through a proxy. Chromium keeps only the last `--host-resolver-rules` it is given, so a store passing its own replaces this list.
+
+## Exceptions in the store's log
+
+Every test can pass while the store writes stack traces to `var/log/exception.log`. Global setup notes the log's size once the seed is done, and global teardown prints anything added after it, with the full entries in `test-results/magento-exception.log`. Each entry names the tests that were running when it was logged. With several workers that is one test per worker, so it narrows the cause down rather than pinning it.
+
+By default that is only a warning, since some stores and extensions log constantly. `failOnExceptions: true`, or `E2E_FAIL_ON_EXCEPTIONS=1` for one run, fails the run instead. `E2E_FAIL_ON_EXCEPTIONS=0` turns it back to a warning.
+
+The first line of each entry is printed to the console, and an exception message can carry SQL or customer data, so bear that in mind where CI logs are public.
+
+It needs `shell.capture`, which the Warden, DDEV and docker compose presets set. The command runs in the shell's PHP service, which must see the same `var/log` as the one serving the store.
 
 ## Auto-discovery
 

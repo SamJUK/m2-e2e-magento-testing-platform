@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: OSL-3.0
  */
 
+import fs from 'fs';
+import path from 'path';
 import { test as base } from '@playwright/test';
 import { Mailpit } from '../helpers/mailpit';
 import { loadData, type MergedData } from '../data';
@@ -20,6 +22,8 @@ export interface CoreFixtures {
    * Themes extend this fixture to inject their selector overrides before project overrides.
    */
   data: MergedData;
+  /** Records when each test ran, so teardown can name the tests running when the store logged an exception. */
+  recordTestWindow: void;
 }
 
 /**
@@ -45,6 +49,18 @@ export const coreTest = base.extend<CoreFixtures>({
   data: async ({}, use) => {
     await use(loadData({ projectRoot: process.cwd() }));
   },
+
+  recordTestWindow: [
+    async ({}, use, testInfo) => {
+      const start = Date.now();
+      await use();
+      const file = process.env.E2E_TEST_WINDOWS;
+      if (!file) return;
+      const title = [`${path.basename(testInfo.file)}:${testInfo.line}`, ...testInfo.titlePath.slice(1)].join(' › ');
+      fs.appendFileSync(file, `${JSON.stringify({ title, retry: testInfo.retry, start, end: Date.now() })}\n`);
+    },
+    { auto: true },
+  ],
 });
 
 export type CoreTest = typeof coreTest;

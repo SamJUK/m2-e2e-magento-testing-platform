@@ -9,7 +9,7 @@ import type { ProjectShellHooks } from '../config/schema';
 /**
  * Shell-hook presets for common Magento development environments.
  *
- * Each preset wires all four hooks (exec, dbDump, dbImport, dbQuery) to the
+ * Each preset wires all five hooks (exec, capture, dbDump, dbImport, dbQuery) to the
  * environment's own CLI. Consumers with other setups (docker compose, SSH,
  * bare metal) declare the hooks themselves — see ProjectShellHooks.
  */
@@ -117,6 +117,7 @@ export function wardenShell(cwd: string): ProjectShellHooks {
       await run('warden', ['db', 'import'], cwd, { stdinFile: inPath });
     },
     dbQuery: (sql) => run('warden', ['db', 'connect', '-e', sql], cwd, { captureStdout: true }),
+    capture: (cmd) => run('warden', ['shell', '-c', cmd], cwd, { captureStdout: true }),
   };
 }
 
@@ -139,6 +140,7 @@ export function ddevShell(cwd: string): ProjectShellHooks {
       await run('ddev', ['import-db', `--file=${inPath}`], cwd);
     },
     dbQuery: (sql) => run('ddev', ['mysql'], cwd, { input: sql, captureStdout: true }),
+    capture: (cmd) => run('ddev', ['exec', cmd], cwd, { captureStdout: true }),
   };
 }
 
@@ -201,14 +203,13 @@ export function dockerComposeShell(options: DockerComposeShellOptions): ProjectS
       `exec "$(command -v ${mariadb} || command -v ${mysql})" "$@"`, 'sh', ...args,
     ]);
 
+  const php = (cmd: string) => compose(['exec', '-T', '-w', workdir, phpService, 'sh', '-c', cmd]);
+
   return {
     exec: async (cmd) => {
-      await run(
-        'docker',
-        compose(['exec', '-T', '-w', workdir, phpService, 'sh', '-c', cmd]),
-        cwd,
-      );
+      await run('docker', php(cmd), cwd);
     },
+    capture: (cmd) => run('docker', php(cmd), cwd, { captureStdout: true }),
     dbDump: async (outPath) => {
       await run(
         'docker',

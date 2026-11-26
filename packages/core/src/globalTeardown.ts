@@ -9,6 +9,7 @@ import { dumpWasTakenThisRun } from './db/run-state';
 import { clearDirtyRun } from './db/dirty-guard';
 import { restoreConfigSnapshot } from './seed/config-snapshot';
 import { usesConfigSnapshot } from './seed/magento';
+import { readNewExceptions, reportExceptions } from './health/exception-log';
 
 /**
  * Call from your project's globalTeardown.ts:
@@ -22,6 +23,9 @@ import { usesConfigSnapshot } from './seed/magento';
  */
 export async function runGlobalTeardown(config: ProjectConfig): Promise<void> {
   console.log('[e2e-core] Global teardown starting...');
+
+  // Read before the restore and cache flush below can add entries of their own.
+  const exceptions = await readNewExceptions(config);
 
   const strategy = config.db?.strategy ?? 'none';
 
@@ -84,4 +88,7 @@ export async function runGlobalTeardown(config: ProjectConfig): Promise<void> {
   }
 
   console.log('[e2e-core] Global teardown complete.');
+
+  // Last, so a failing check never skips the restore.
+  reportExceptions(config, exceptions);
 }

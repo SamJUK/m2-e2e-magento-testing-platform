@@ -27,6 +27,8 @@ export interface ProjectShellHooks {
    * seed falls back to config:set.
    */
   dbQuery?: (sql: string) => Promise<string>;
+  /** Run a command like `exec` and return its stdout. Reads var/log/exception.log; without it that check is skipped. */
+  capture?: (cmd: string) => Promise<string>;
 }
 
 export interface ProjectAdminConfig {
@@ -172,4 +174,9 @@ export interface ProjectConfig {
    * Example: [...DEFAULT_BLOCKED_HOSTS.filter((h) => h !== 'trustpilot.com'), 'acme-reviews.com']
    */
   blockedHosts?: string[];
+  /**
+   * Fail the run when the store adds to var/log/exception.log while the tests run.
+   * Off by default, when new entries are only printed. E2E_FAIL_ON_EXCEPTIONS=1 or 0 overrides it.
+   */
+  failOnExceptions?: boolean;
 }
