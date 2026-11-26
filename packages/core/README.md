@@ -115,10 +115,9 @@ interface ProjectConfig {
     s3Key?: string;              // S3 object key for s3-import
   };
   shell?: {
-    exec?: (cmd: string) => Promise<void>;      // Run cmd in Magento container
+    exec?: (cmd: string, options?: { quiet?: boolean }) => Promise<string | void>; // Run cmd in Magento container; return stdout to enable log checks
     dbDump?: (outPath: string) => Promise<void>;
     dbImport?: (inPath: string) => Promise<void>;
-    capture?: (cmd: string) => Promise<string>; // Run cmd, return stdout; the presets set it
   };
   excludeModules?: string[];     // NPM module packages to exclude from discovery
   appCodeDir?: string | false;   // Path to app/code/, false to disable, omit for auto-detect
@@ -141,13 +140,13 @@ The block is Chromium's `--host-resolver-rules` launch flag, so it applies only 
 
 ## Exceptions in the store's log
 
-Every test can pass while the store writes stack traces to `var/log/exception.log`. Global setup notes the log's size once the seed is done, and global teardown prints anything added after it, with the full entries in `test-results/magento-exception.log`. Each entry names the tests that were running when it was logged. With several workers that is one test per worker, so it narrows the cause down rather than pinning it.
+Every test can pass while the store writes stack traces to `var/log/exception.log`. Global setup notes the log's size once the seed is done, and global teardown prints anything added after it, with the full entries in `test-results/magento-exception.log`. Each entry names the request that was in flight when it was logged and the test that sent it, for example `GET /backend/catalog/product/edit/id/1/ in admin.spec.ts:36 › Admin grids › can find a product in the grid and open its edit form`. Entries with no request in flight (cron, a queue consumer) list the tests that were running instead. Only requests to `baseURL`'s origin count, so it must be the origin PHP serves (not one that redirects to it). Only the test's own `page` and `context` are watched: requests through the API request fixture, or a context made with `browser.newContext()`, are not seen.
 
 By default that is only a warning, since some stores and extensions log constantly. `failOnExceptions: true`, or `E2E_FAIL_ON_EXCEPTIONS=1` for one run, fails the run instead. `E2E_FAIL_ON_EXCEPTIONS=0` turns it back to a warning.
 
 The first line of each entry is printed to the console, and an exception message can carry SQL or customer data, so bear that in mind where CI logs are public.
 
-It needs `shell.capture`, which the Warden, DDEV and docker compose presets set. The command runs in the shell's PHP service, which must see the same `var/log` as the one serving the store.
+It needs a `shell.exec` that returns the command's stdout, as the Warden, DDEV and docker compose presets do. The command runs in the shell's PHP service, which must see the same `var/log` as the one serving the store.
 
 ## Auto-discovery
 

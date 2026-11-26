@@ -164,7 +164,7 @@ function configCommand({ path, value }: SeedConfigValue): string {
  * Under `db.strategy: 'dump-restore'` (or `'s3-import'`) the database restore
  * undoes the seed. Under `'none'` the seed instead snapshots the config it is
  * about to write and puts it back in teardown — which needs `shell.dbQuery`,
- * because `shell.exec` cannot read a value back and only SQL can express "this
+ * because a custom `shell.exec` need not return its output and only SQL can express "this
  * row did not exist before".
  *
  * With neither, the changes are permanent: no admin or customer CAPTCHA, no

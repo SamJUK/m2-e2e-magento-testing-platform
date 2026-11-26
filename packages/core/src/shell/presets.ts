@@ -9,7 +9,7 @@ import type { ProjectShellHooks } from '../config/schema';
 /**
  * Shell-hook presets for common Magento development environments.
  *
- * Each preset wires all five hooks (exec, capture, dbDump, dbImport, dbQuery) to the
+ * Each preset wires all four hooks (exec, dbDump, dbImport, dbQuery) to the
  * environment's own CLI. Consumers with other setups (docker compose, SSH,
  * bare metal) declare the hooks themselves — see ProjectShellHooks.
  */
@@ -31,7 +31,7 @@ function run(
   command: string,
   args: string[],
   cwd: string,
-  opts: { stdinFile?: string; stdoutFile?: string; input?: string; captureStdout?: boolean } = {},
+  opts: { stdinFile?: string; stdoutFile?: string; input?: string; captureStdout?: boolean; echo?: boolean } = {},
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -79,8 +79,11 @@ function run(
       flushed.catch(() => {});
       child.stdout!.pipe(out);
     } else if (opts.captureStdout) {
-      child.stdout!.on('data', (chunk: Buffer) => {
-        stdout += chunk.toString();
+      // A character split across two chunks stays whole.
+      child.stdout!.setEncoding('utf8');
+      child.stdout!.on('data', (chunk: string) => {
+        stdout += chunk;
+        if (opts.echo) process.stdout.write(chunk);
       });
     }
 
@@ -105,9 +108,7 @@ function run(
  */
 export function wardenShell(cwd: string): ProjectShellHooks {
   return {
-    exec: async (cmd) => {
-      await run('warden', ['shell', '-c', cmd], cwd);
-    },
+    exec: (cmd, options) => run('warden', ['shell', '-c', cmd], cwd, { captureStdout: true, echo: !options?.quiet }),
     dbDump: async (outPath) => {
       // Warden's db user has no PROCESS privilege. mysqldump still writes the
       // dump without it, but prints an access-denied error for tablespaces.
@@ -117,7 +118,6 @@ export function wardenShell(cwd: string): ProjectShellHooks {
       await run('warden', ['db', 'import'], cwd, { stdinFile: inPath });
     },
     dbQuery: (sql) => run('warden', ['db', 'connect', '-e', sql], cwd, { captureStdout: true }),
-    capture: (cmd) => run('warden', ['shell', '-c', cmd], cwd, { captureStdout: true }),
   };
 }
 
@@ -127,9 +127,7 @@ export function wardenShell(cwd: string): ProjectShellHooks {
  */
 export function ddevShell(cwd: string): ProjectShellHooks {
   return {
-    exec: async (cmd) => {
-      await run('ddev', ['exec', cmd], cwd);
-    },
+    exec: (cmd, options) => run('ddev', ['exec', cmd], cwd, { captureStdout: true, echo: !options?.quiet }),
     dbDump: async (outPath) => {
       // No --no-tablespaces here: export-db builds its own dump command and
       // takes no extra flags. DDEV adds --no-tablespaces itself on MySQL 9.5+
@@ -140,7 +138,6 @@ export function ddevShell(cwd: string): ProjectShellHooks {
       await run('ddev', ['import-db', `--file=${inPath}`], cwd);
     },
     dbQuery: (sql) => run('ddev', ['mysql'], cwd, { input: sql, captureStdout: true }),
-    capture: (cmd) => run('ddev', ['exec', cmd], cwd, { captureStdout: true }),
   };
 }
 
@@ -206,10 +203,7 @@ export function dockerComposeShell(options: DockerComposeShellOptions): ProjectS
   const php = (cmd: string) => compose(['exec', '-T', '-w', workdir, phpService, 'sh', '-c', cmd]);
 
   return {
-    exec: async (cmd) => {
-      await run('docker', php(cmd), cwd);
-    },
-    capture: (cmd) => run('docker', php(cmd), cwd, { captureStdout: true }),
+    exec: (cmd, options) => run('docker', php(cmd), cwd, { captureStdout: true, echo: !options?.quiet }),
     dbDump: async (outPath) => {
       await run(
         'docker',

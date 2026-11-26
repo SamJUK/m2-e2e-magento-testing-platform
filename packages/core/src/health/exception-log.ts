@@ -12,14 +12,15 @@ const ENTRY = /^\[\d{4}-\d\d-\d\d[T ][^\]]*\] \S+\.[A-Z]+: /;
 const SAVED_TO = path.join('test-results', 'magento-exception.log');
 // ponytail: a log flooding faster than this is reported from its first 5MB.
 const MAX_BYTES = 5_000_000;
-// Allows for the store's clock and the runner's drifting apart a little.
-const CLOCK_SLACK_MS = 1_000;
+// The store and the runner share a clock in CI and locally (measured within 15ms); this covers the rest.
+const CLOCK_SLACK_MS = 250;
 
 interface TestWindow {
   title: string;
   retry: number;
   start: number;
   end: number;
+  requests?: { label: string; start: number; end: number }[];
 }
 
 let offset: number | undefined;
@@ -31,23 +32,26 @@ function failsRun(config: ProjectConfig): boolean {
 
 /** Before anything writes to the store, so refusing leaves nothing to undo. */
 export function assertExceptionCheckPossible(config: ProjectConfig): void {
-  if (failsRun(config) && !config.shell?.capture) {
-    throw new Error('[e2e-core] failOnExceptions is on, but shell.capture is not set, so the exception log cannot be read.');
+  if (failsRun(config) && !config.shell?.exec) {
+    throw new Error('[e2e-core] failOnExceptions is on, but shell.exec is not set, so the exception log cannot be read.');
   }
 }
 
 /** Call at the end of global setup, so the seed's own entries are not counted. */
 export async function markExceptionLog(config: ProjectConfig): Promise<void> {
-  if (!config.shell?.capture) return;
+  if (!config.shell?.exec) return;
   let size: string;
   try {
+    const out = await config.shell.exec(`wc -c < ${LOG} 2>/dev/null || echo 0`, { quiet: true });
     // The last line only: a DDEV or Warden shell can print a banner first.
-    size = (await config.shell.capture(`wc -c < ${LOG} 2>/dev/null || echo 0`)).trim().split(/\r?\n/).pop()?.trim() ?? '';
+    size = typeof out === 'string' ? (out.trim().split(/\r?\n/).pop()?.trim() ?? '') : 'nothing: this shell.exec does not return its output';
   } catch (error) {
     size = String(error);
   }
   if (!/^\d+$/.test(size)) {
-    console.warn(`[e2e-core] Could not read the size of ${LOG} (got "${size.slice(0, 80)}"), so new exceptions will not be checked.`);
+    const message = `[e2e-core] Could not read the size of ${LOG} (got "${size.slice(0, 80)}"), so new exceptions cannot be checked.`;
+    if (failsRun(config)) throw new Error(message);
+    console.warn(message);
     return;
   }
   offset = Number(size);
@@ -60,13 +64,14 @@ export async function markExceptionLog(config: ProjectConfig): Promise<void> {
 
 /** What the store added to its exception log since markExceptionLog. Empty when nothing was marked. */
 export async function readNewExceptions(config: ProjectConfig): Promise<string> {
-  if (offset === undefined || !config.shell?.capture) return '';
+  if (offset === undefined || !config.shell?.exec) return '';
   try {
     // A log rotated or truncated during the run is read from the start.
-    const log = await config.shell.capture(
+    const log = await config.shell.exec(
       `[ -f ${LOG} ] || exit 0; if [ "$(wc -c < ${LOG})" -lt ${offset} ]; then cat ${LOG}; else tail -c +${offset + 1} ${LOG}; fi | head -c ${MAX_BYTES}`,
+      { quiet: true },
     );
-    return log.replace(/\r\n/g, '\n');
+    return typeof log === 'string' ? log.replace(/\r\n/g, '\n') : '';
   } catch (error) {
     // Never in the way of the restores that follow it in teardown.
     console.warn(`[e2e-core] Could not read ${LOG}, so new exceptions were not checked: ${String(error)}`);
@@ -113,12 +118,26 @@ function readTestWindows(): TestWindow[] {
   });
 }
 
-/** Every test running when the entry was logged: one per worker at most, so with several workers it narrows rather than pins down. */
+/** The requests in flight when the entry was logged, or failing that every test running then. */
 function runningAt(headline: string, windows: TestWindow[]): string {
-  const at = Date.parse(headline.slice(1, headline.indexOf(']')));
+  const stamp = headline.slice(1, headline.indexOf(']'));
+  // Magento logs in UTC (app/bootstrap.php); older formats leave the zone off.
+  const at = Date.parse(/(Z|[+-]\d\d:?\d\d)$/.test(stamp) ? stamp : `${stamp.replace(' ', 'T')}Z`);
   if (Number.isNaN(at)) return 'unknown (no readable timestamp)';
-  const titles = windows
-    .filter((w) => w.start - CLOCK_SLACK_MS <= at && at <= w.end + CLOCK_SLACK_MS)
-    .map((w) => (w.retry ? `${w.title} (retry ${w.retry})` : w.title));
-  return titles.length ? titles.join(' | ') : 'no test (between tests, or in setup or teardown)';
+  // A stamp without a fraction (older Monolog) means any time in that second.
+  const width = /\d\d:\d\d:\d\d\.\d/.test(stamp) ? 0 : 999;
+  const within = (slack: number) => (w: { start: number; end: number }) => w.start - slack <= at + width && at <= w.end + slack;
+  const during = within(CLOCK_SLACK_MS);
+  const named = (w: TestWindow) => (w.retry ? `${w.title} (retry ${w.retry})` : w.title);
+  const inFlight = (match: (r: { start: number; end: number }) => boolean) =>
+    windows.flatMap((w) => (w.requests ?? []).filter(match).map((r) => `${r.label} in ${named(w)}`));
+
+  // Requests that strictly contain the moment first; the slack only when none do.
+  const strict = inFlight(within(0));
+  const requests = strict.length ? strict : inFlight(during);
+  if (requests.length) return requests.join(' | ');
+  const tests = windows.filter(during).map(named);
+  return tests.length
+    ? `no request in flight (cron, a queue or a background job?); tests running: ${tests.join(' | ')}`
+    : 'no test (between tests, or in setup or teardown)';
 }
