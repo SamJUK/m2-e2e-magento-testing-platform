@@ -8,6 +8,7 @@ export type { ExclusionReason, TestExclusion } from './config/exclusions';
 export * from './config/schema';
 export * from './config/defaults';
 export { createPlaywrightConfig, defineProjectConfig } from './config/playwright';
+export { DEFAULT_BLOCKED_HOSTS } from './config/blocked-hosts';
 
 // Data
 export { loadData } from './data';

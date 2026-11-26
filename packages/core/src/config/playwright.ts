@@ -225,8 +225,9 @@ export function createPlaywrightConfig(
     retries,
     grepInvert,
     exclusions,
+    use: extraUse,
     ...extraOptions
-  } = options;
+  } = options as typeof options & { use?: PlaywrightTestConfig['use'] };
 
   // The fixtures read the admin credentials from the environment, so mirror
   // config.admin into it. Without this, `admin: { slug: '/admin', … }` in a
@@ -316,7 +317,14 @@ export function createPlaywrightConfig(
       screenshot: 'only-on-failure',
       video: 'on-first-retry',
       ignoreHTTPSErrors: true,
-      launchOptions: { args: [blockedHostsLaunchArg(config.blockedHosts)].filter((arg) => arg !== undefined) },
+      // Merged rather than replaced, so a store's own `use` keeps the blocking.
+      ...extraUse,
+      launchOptions: {
+        ...extraUse?.launchOptions,
+        args: [blockedHostsLaunchArg(config.blockedHosts), ...(extraUse?.launchOptions?.args ?? [])].filter(
+          (arg): arg is string => arg !== undefined,
+        ),
+      },
     },
 
     projects: [

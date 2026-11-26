@@ -75,7 +75,8 @@ export function blockedHostsLaunchArg(blockedHosts: string[] = DEFAULT_BLOCKED_H
     .split(',')
     .map((h) => h.trim())
     .filter(Boolean);
-  const hosts = [...blockedHosts, ...extra];
+  // `*.foo.com` would become `MAP *.*.foo.com` and miss foo.com itself.
+  const hosts = [...blockedHosts, ...extra].map((host) => host.replace(/^\*\./, ''));
   if (hosts.length === 0) return undefined;
   const rules = hosts.flatMap((host) => [`MAP ${host} ~NOTFOUND`, `MAP *.${host} ~NOTFOUND`]);
   return `--host-resolver-rules=${rules.join(', ')}`;
