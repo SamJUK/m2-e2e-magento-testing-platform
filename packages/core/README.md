@@ -125,6 +125,18 @@ interface ProjectConfig {
 }
 ```
 
+## Third-party hosts
+
+Marketing, analytics, chat and consent hosts (`DEFAULT_BLOCKED_HOSTS`) fail DNS in every test, so popups and trackers cannot get in the way. Payment providers are not on the list.
+
+```ts
+blockedHosts: [...DEFAULT_BLOCKED_HOSTS.filter((h) => h !== 'trustpilot.com'), 'acme-reviews.com'],
+```
+
+`[]` blocks nothing. `E2E_BLOCK_THIRD_PARTY=0` turns blocking off for one run and `E2E_BLOCK_EXTRA_HOSTS=foo.com,bar.io` adds hosts. Each entry covers the host and its subdomains.
+
+The block is Chromium's `--host-resolver-rules` launch flag, so it applies only to Chromium that Playwright launches itself: not Firefox or WebKit, not a remote browser (`connectOptions`), and not through a proxy. Chromium keeps only the last `--host-resolver-rules` it is given, so a store passing its own replaces this list.
+
 ## Auto-discovery
 
 `createPlaywrightConfig` builds the Playwright `projects` array from four sources, in order:
