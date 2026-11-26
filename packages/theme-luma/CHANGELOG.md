@@ -1,5 +1,15 @@
 # @samjuk/e2e-m2-theme-luma
 
+## 0.4.0
+
+### Patch Changes
+
+- 7f8f2a7: Fix two flaky tests. Removing a product from the comparison list waits for the page scripts and for the confirmation modal, which opens a moment after the click. Creating an invoice or shipment in the admin waits for the save request rather than its response, so a save slower than 20s is no longer clicked again.
+- 1003391: `AccountPage.logout()` waits for the page scripts before signing out. Straight after sign-in, a sign-out clicked before the scripts had booted posted a form key Magento rejected with "Invalid Form Key".
+- Updated dependencies [a0a46b3]
+- Updated dependencies [41b9626]
+  - @samjuk/e2e-m2-playwright-core@0.4.0
+
 ## 0.3.0
 
 ### Patch Changes
