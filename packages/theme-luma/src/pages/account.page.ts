@@ -193,6 +193,9 @@ export class AccountPage implements IAccountPage {
     await this.page.goto(this.data.slugs.account.overview, {
       waitUntil: 'domcontentloaded',
     });
+    // Straight after sign-in, a sign-out clicked before the page scripts have
+    // booted posts a form key Magento rejects ("Invalid Form Key").
+    await waitForPageScripts(this.page);
     const s = this.data.selectors.accountOverviewPage;
     const customerMenu = this.page.locator(s.customerMenuSelector);
     const signOutLink = customerMenu.getByRole('link', { name: s.logoutButtonLabel });
