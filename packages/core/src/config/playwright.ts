@@ -9,6 +9,7 @@ import { defineConfig, devices, type PlaywrightTestConfig } from '@playwright/te
 import type { ProjectConfig } from './schema';
 import { buildGrepInvert, reportExclusions, type TestExclusion } from './exclusions';
 import { ADMIN_PER_WORKER_ENV } from '../seed/magento';
+import { blockedHostsLaunchArg } from './blocked-hosts';
 
 interface AutoDiscoveredModule {
   name: string;
@@ -315,6 +316,7 @@ export function createPlaywrightConfig(
       screenshot: 'only-on-failure',
       video: 'on-first-retry',
       ignoreHTTPSErrors: true,
+      launchOptions: { args: [blockedHostsLaunchArg()].filter((arg) => arg !== undefined) },
     },
 
     projects: [
