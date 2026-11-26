@@ -107,11 +107,12 @@ export class AdminOrderPage implements IAdminOrderPage {
     // request at all is repeated, so a slow save can never be submitted twice
     // and produce two documents.
     await expect(async () => {
+      // The request, not the response: a save slower than the wait would
+      // otherwise read as a swallowed click and be clicked again.
       const posted = this.page
-        .waitForResponse(
-          (response) => response.request().method() === 'POST' && response.url().includes('/save'),
-          { timeout: 20_000 },
-        )
+        .waitForRequest((request) => request.method() === 'POST' && request.url().includes('/save'), {
+          timeout: 20_000,
+        })
         .catch(() => null);
       await this.page.getByRole('button', { name: form.submitButtonLabel, exact: true }).click();
       expect(await posted, 'the admin submitted the form').not.toBeNull();

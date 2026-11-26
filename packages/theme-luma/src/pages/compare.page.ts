@@ -129,7 +129,9 @@ export class ComparePage implements IComparePage {
     // button; Hyvä calls window.confirm(), which Playwright dismisses unless a
     // handler accepts it. Install the handler for the native case and click the
     // modal's button when that is the one that appeared.
+    let dialogSeen = false;
     const acceptDialog = (dialog: Dialog) => {
+      dialogSeen = true;
       void dialog.accept();
     };
     this.page.on('dialog', acceptDialog);
@@ -147,8 +149,16 @@ export class ComparePage implements IComparePage {
         const current = await this.getProductNames();
         const position = current.indexOf(productTitle);
         if (position >= 0) {
+          // An early click on the remove link is swallowed, and the modal opens
+          // a moment after the click, so neither can be checked straight away.
+          await waitForPageScripts(this.page);
           await this.removeControls.nth(position).click();
-          if (await confirmButton.isVisible()) await confirmButton.click();
+          const removed = this.page.waitForResponse(
+            (response) => response.request().method() === 'POST' && response.url().includes('/remove'),
+            { timeout: 30_000 },
+          ).catch(() => null);
+          if (!dialogSeen) await confirmButton.click({ timeout: 10_000 });
+          await removed;
           await this.open();
         }
         await expect(
