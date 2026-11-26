@@ -6,3 +6,4 @@
 export * from './schema';
 export * from './defaults';
 export * from './playwright';
+export { DEFAULT_BLOCKED_HOSTS } from './blocked-hosts';

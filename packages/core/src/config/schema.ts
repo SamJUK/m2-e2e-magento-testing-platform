@@ -165,4 +165,11 @@ export interface ProjectConfig {
    * Example: ['samjuk/module-foo']
    */
   vendorModules?: string[];
+  /**
+   * Third-party hosts failed in DNS, each with its subdomains. Defaults to
+   * DEFAULT_BLOCKED_HOSTS; build on it to add or remove hosts, `[]` blocks none.
+   *
+   * Example: [...DEFAULT_BLOCKED_HOSTS.filter((h) => h !== 'trustpilot.com'), 'acme-reviews.com']
+   */
+  blockedHosts?: string[];
 }
