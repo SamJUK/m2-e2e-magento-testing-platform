@@ -316,7 +316,7 @@ export function createPlaywrightConfig(
       screenshot: 'only-on-failure',
       video: 'on-first-retry',
       ignoreHTTPSErrors: true,
-      launchOptions: { args: [blockedHostsLaunchArg()].filter((arg) => arg !== undefined) },
+      launchOptions: { args: [blockedHostsLaunchArg(config.blockedHosts)].filter((arg) => arg !== undefined) },
     },
 
     projects: [

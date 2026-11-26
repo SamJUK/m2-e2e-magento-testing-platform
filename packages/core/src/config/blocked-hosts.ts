@@ -14,10 +14,10 @@
  * Blocked in DNS rather than with context.route(): a route turns off the
  * browser cache, so every page refetched every script (about 230 on Luma).
  *
- * Opt out with E2E_BLOCK_THIRD_PARTY=0; extend with
- * E2E_BLOCK_EXTRA_HOSTS="foo.com,bar.io" (the host and its subdomains).
+ * Tune per store with `blockedHosts` in the project config, or with
+ * E2E_BLOCK_EXTRA_HOSTS="foo.com,bar.io" and E2E_BLOCK_THIRD_PARTY=0.
  */
-const THIRD_PARTY_BLOCKED_HOST_SUFFIXES = [
+export const DEFAULT_BLOCKED_HOSTS = [
   // Marketing popups / email capture
   'klaviyo.com',
   'mailchimp.com',
@@ -68,16 +68,15 @@ const THIRD_PARTY_BLOCKED_HOST_SUFFIXES = [
   'instagram.com',
 ];
 
-/** Chromium flag that fails DNS for each blocked host and its subdomains, or undefined when opted out. */
-export function blockedHostsLaunchArg(): string | undefined {
+/** Chromium flag that fails DNS for each blocked host and its subdomains, or undefined when none are blocked. */
+export function blockedHostsLaunchArg(blockedHosts: string[] = DEFAULT_BLOCKED_HOSTS): string | undefined {
   if (process.env.E2E_BLOCK_THIRD_PARTY === '0') return undefined;
   const extra = (process.env.E2E_BLOCK_EXTRA_HOSTS ?? '')
     .split(',')
     .map((h) => h.trim())
     .filter(Boolean);
-  const rules = [...THIRD_PARTY_BLOCKED_HOST_SUFFIXES, ...extra].flatMap((host) => [
-    `MAP ${host} ~NOTFOUND`,
-    `MAP *.${host} ~NOTFOUND`,
-  ]);
+  const hosts = [...blockedHosts, ...extra];
+  if (hosts.length === 0) return undefined;
+  const rules = hosts.flatMap((host) => [`MAP ${host} ~NOTFOUND`, `MAP *.${host} ~NOTFOUND`]);
   return `--host-resolver-rules=${rules.join(', ')}`;
 }

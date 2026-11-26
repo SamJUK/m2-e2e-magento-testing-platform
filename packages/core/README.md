@@ -121,6 +121,7 @@ interface ProjectConfig {
   };
   excludeModules?: string[];     // NPM module packages to exclude from discovery
   appCodeDir?: string | false;   // Path to app/code/, false to disable, omit for auto-detect
+  blockedHosts?: string[];       // Third-party hosts failed in DNS; default DEFAULT_BLOCKED_HOSTS, [] for none
 }
 ```
 
