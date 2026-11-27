@@ -55,10 +55,16 @@ export class AdminLoginPage implements IAdminLoginPage {
     await this.page.waitForLoadState('domcontentloaded');
     // Not the menubar: a role with no resources renders none. The form going
     // away is what separates "signed in, forbidden" from "sign-in refused",
-    // and without it a refused sign-in asserts denial against a guest.
-    await expect(
-      this.usernameField,
-      `the sign-in for ${username} was accepted`,
-    ).toBeHidden({ timeout: 30_000 });
+    // and without it a refused sign-in asserts denial against a guest. Every
+    // refusal (bad form key, no role, locked account) comes back as a message
+    // on the same form, so the failure carries it.
+    await expect(async () => {
+      if (!(await this.usernameField.isVisible())) return;
+      const said = (await this.page.locator('.messages .message-error').allTextContents())
+        .map((text) => text.trim())
+        .filter(Boolean)
+        .join(' | ');
+      throw new Error(`the sign-in for ${username} was refused (the admin said: ${said || 'nothing'})`);
+    }).toPass({ timeout: 30_000 });
   }
 }
