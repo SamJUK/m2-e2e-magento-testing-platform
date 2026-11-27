@@ -46,11 +46,9 @@ jobs:
       # `changeset publish`, not `pnpm publish`: pnpm's own publish has no OIDC
       # support yet (pnpm/pnpm#9812), while changesets delegates to `npm
       # publish` and inherits it.
-      #
-      # v2, not v1: v1 finds what was published by reading "New tag:" lines,
-      # which the Changesets v3 CLI no longer prints, so it pushed no tags and
-      # created no releases for 0.5.0.
-      - uses: changesets/action@v2
+      - uses: changesets/action@v1
         with:
-          version-script: pnpm version-packages
-          publish-script: pnpm changeset publish
+          version: pnpm version-packages
+          publish: pnpm changeset publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
