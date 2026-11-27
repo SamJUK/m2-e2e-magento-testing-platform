@@ -84,23 +84,13 @@ test.describe('Admin product edit', () => {
 
       await adminLoginPage.login();
 
-      await adminProductPage.renameProduct(
-        original.sku,
-        original.title,
-        renamed,
-        data.slugs.products.adminEditableProduct,
-      );
+      await adminProductPage.renameProduct(original.sku, renamed, data.slugs.products.adminEditableProduct);
 
       // Put it back, so this can run again on a store whose database is never
       // rolled back (the Hyva demo runs DB_STRATEGY=none) — and prove the
       // restore landed the same way the rename was proved, rather than
       // assuming an unverified write undid a verified one.
-      await adminProductPage.renameProduct(
-        original.sku,
-        renamed,
-        original.title,
-        data.slugs.products.adminEditableProduct,
-      );
+      await adminProductPage.renameProduct(original.sku, original.title, data.slugs.products.adminEditableProduct);
     },
   );
 });
