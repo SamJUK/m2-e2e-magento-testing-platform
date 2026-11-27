@@ -1,5 +1,11 @@
 # @samjuk/create-magento-e2e
 
+## 0.1.5
+
+### Patch Changes
+
+- b0a106e: A fresh scaffold installs the 0.4 packages, not 0.3. The release now bumps the template's pins along with the packages.
+
 ## 0.1.4
 
 ### Patch Changes

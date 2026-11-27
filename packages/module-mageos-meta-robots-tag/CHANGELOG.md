@@ -1,5 +1,12 @@
 # @samjuk/e2e-m2-module-mageos-meta-robots-tag
 
+## 0.5.0
+
+### Patch Changes
+
+- Updated dependencies [4d2726a]
+  - @samjuk/e2e-m2-playwright-core@0.5.0
+
 ## 0.4.0
 
 ### Patch Changes
