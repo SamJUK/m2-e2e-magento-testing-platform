@@ -28,6 +28,14 @@ export class AdminProductPage {
    * from the name the form is expected to show (a SKU works well).
    */
   async openProduct(searchTerm: string, expectedName: string = searchTerm): Promise<void> {
+    await this.openEditForm(searchTerm);
+    // Real catalogs carry non-breaking and doubled spaces in product names, so
+    // compare on collapsed whitespace rather than the raw field value.
+    expect(collapse(await this.nameField.inputValue())).toBe(collapse(expectedName));
+  }
+
+  /** Opens the edit form for the one grid row matching `searchTerm`, whatever its name. */
+  private async openEditForm(searchTerm: string): Promise<void> {
     const s = this.data.selectors.admin.products;
 
     await openGrid(this.page, `${this.adminSlug}${this.data.slugs.admin.products.grid}`);
@@ -41,11 +49,7 @@ export class AdminProductPage {
       waitUntil: 'domcontentloaded',
     });
     await expect(this.page.getByRole('menubar')).toBeVisible();
-    // Real catalogs carry non-breaking and doubled spaces in product names, so
-    // compare on collapsed whitespace rather than the raw field value.
-    const nameField = this.nameField;
-    await expect(nameField).toHaveValue(/\S/);
-    expect(collapse(await nameField.inputValue())).toBe(collapse(expectedName));
+    await expect(this.nameField).toHaveValue(/\S/);
   }
 
   /** Asserts the product grid's row for `searchTerm` carries `expectedName`. */
@@ -69,23 +73,15 @@ export class AdminProductPage {
    * that silently drops the attribute, or one that never invalidates the page
    * cache, fails one of them.
    *
-   * The caller is expected to call this a second time to restore the original
-   * name, so the test can re-run on a store whose database is never rolled
-   * back. If it never gets that far, the seed rewrites the name on the next
-   * run.
+   * It starts from whatever name the product has, so a retry after a failure
+   * part-way through is not stuck on a name the failed attempt left behind.
+   * Give `newName` a fresh random part: that is what stops a rename that did
+   * nothing from passing the reads on a store that already carried the name.
    */
-  async renameProduct(
-    searchTerm: string,
-    currentName: string,
-    newName: string,
-    storefrontUrl: string,
-  ): Promise<void> {
+  async renameProduct(searchTerm: string, newName: string, storefrontUrl: string): Promise<void> {
     const s = this.data.selectors.admin.products;
 
-    // Opening it first is what proves the starting state: without it a rename
-    // that silently did nothing would still "pass" the read-back below on a
-    // store that already happened to carry the new name.
-    await this.openProduct(searchTerm, currentName);
+    await this.openEditForm(searchTerm);
 
     await this.nameField.fill(newName);
     await this.page
