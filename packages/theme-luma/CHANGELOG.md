@@ -1,5 +1,13 @@
 # @samjuk/e2e-m2-theme-luma
 
+## 0.5.0
+
+### Patch Changes
+
+- 4322005: A refused admin sign-in in `loginAs` now fails with the admin's own error message, so an intermittent refusal says why.
+- Updated dependencies [4d2726a]
+  - @samjuk/e2e-m2-playwright-core@0.5.0
+
 ## 0.4.0
 
 ### Patch Changes
