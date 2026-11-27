@@ -7,7 +7,7 @@
     "lint": "pnpm -r --filter './packages/*' lint",
     "clean": "pnpm -r --filter './packages/*' clean",
     "changeset": "changeset",
-    "version-packages": "changeset version",
+    "version-packages": "changeset version && node scripts/check-template-versions.mjs --fix",
     "release": "pnpm -r build && changeset publish",
     "stack:up": "tests/docker/run.sh up",
     "stack:test": "tests/docker/run.sh test",
