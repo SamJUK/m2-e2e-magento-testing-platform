@@ -100,7 +100,6 @@ const FUNCTIONAL_CONFIG: SeedConfigValue[] = [
   // the default display currency makes config:set reject the value, which
   // leaves a store with another display currency as it was.
   { path: 'currency/options/allow', value: 'USD,GBP,EUR', validate: true },
-  { path: 'currency/options/installed', value: 'USD,GBP,EUR' },
 
   // On by default. Loads Adobe's remote script, which pops a tour over the admin for every new admin user.
   { path: 'admin/usage/enabled', value: '0' },
@@ -152,6 +151,50 @@ function adminNames(username: string, workers: number): string[] {
 }
 
 export const ADMIN_PER_WORKER_ENV = 'E2E_ADMIN_PER_WORKER';
+
+function sqlList(names: string[]): string {
+  return names.map((name) => `'${name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`).join(', ');
+}
+
+// Usernames compare case-insensitively, as admin_user's collation does.
+async function adminUsernames(config: ProjectConfig, where = ''): Promise<string[]> {
+  const out = await config.shell!.dbQuery!(`SELECT username FROM ${config.db?.tablePrefix ?? ''}admin_user${where};`);
+  return out.split(/\r?\n/).map((line) => line.trim().toLowerCase()).filter(Boolean);
+}
+
+/**
+ * `wait` returns 0 whatever its jobs did, so an admin whose create was killed (an OOM on a
+ * small runner) would otherwise surface later as one worker failing to log in.
+ */
+async function assertAdminsExist(config: ProjectConfig, names: string[]): Promise<void> {
+  if (!config.shell?.dbQuery) return;
+  const found = new Set(await adminUsernames(config, ` WHERE username IN (${sqlList(names)})`));
+  const missing = names.filter((name) => !found.has(name.toLowerCase()));
+  if (missing.length) {
+    throw new Error(`[e2e-core] The seed could not create the admin user(s) ${missing.join(', ')}; see the admin:user:create output above.`);
+  }
+}
+
+/**
+ * Deletes every per-worker admin (`<username>-<n>`) on a store the database strategy will not
+ * restore: they are full Administrators with the known test password. Read from the store rather
+ * than remembered, so admins left by a cancelled run, or by one with more workers, go too.
+ * Their role rows have no foreign key, so they go first.
+ */
+export async function removeWorkerAdmins(config: ProjectConfig): Promise<void> {
+  if (!config.shell?.dbQuery) return;
+  const base = `${config.admin.username.toLowerCase()}-`;
+  const names = (await adminUsernames(config)).filter(
+    (name) => name.startsWith(base) && /^\d+$/.test(name.slice(base.length)),
+  );
+  if (names.length === 0) return;
+  const prefix = config.db?.tablePrefix ?? '';
+  await config.shell.dbQuery(
+    `DELETE r FROM ${prefix}authorization_role r JOIN ${prefix}admin_user u ON u.user_id = r.user_id ` +
+      `WHERE r.user_type = '2' AND u.username IN (${sqlList(names)});`,
+  );
+  await config.shell.dbQuery(`DELETE FROM ${prefix}admin_user WHERE username IN (${sqlList(names)});`);
+}
 
 /** `config:set` for one seed value, quoted so the shell reads it literally. */
 function configCommand({ path, value }: SeedConfigValue): string {
@@ -224,9 +267,10 @@ export async function runSeed(config: ProjectConfig, workers = 1): Promise<void>
   // admin:user:delete (that one is n98-magerun2's).
   // admin:user:create resets an existing user's password and is_active, but not a lockout.
   const { username, password } = config.admin;
+  const admins = adminNames(username, workers);
   await config.shell.exec(
     parallel(
-      adminNames(username, workers).map(
+      admins.map(
         (name, i) =>
           `php bin/magento admin:user:create ` +
           `--admin-email=${shellQuote(i ? `playwright-tests-${i}@example.com` : 'playwright-tests@example.com')} ` +
@@ -236,6 +280,7 @@ export async function runSeed(config: ProjectConfig, workers = 1): Promise<void>
       ),
     ),
   );
+  await assertAdminsExist(config, admins);
   // Workers are forked after global setup, so they inherit this.
   if (workers > 1) process.env[ADMIN_PER_WORKER_ENV] = username;
 

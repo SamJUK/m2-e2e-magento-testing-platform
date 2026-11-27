@@ -8,7 +8,7 @@ import { restoreDatabase } from './db/dump';
 import { dumpWasTakenThisRun } from './db/run-state';
 import { clearDirtyRun } from './db/dirty-guard';
 import { restoreConfigSnapshot } from './seed/config-snapshot';
-import { usesConfigSnapshot } from './seed/magento';
+import { removeWorkerAdmins, usesConfigSnapshot } from './seed/magento';
 import { readNewExceptions, reportExceptions } from './health/exception-log';
 
 /**
@@ -84,7 +84,14 @@ export async function runGlobalTeardown(config: ProjectConfig): Promise<void> {
   // No database restore on this strategy, so the seed's config changes are put
   // back individually from the snapshot taken before they were made.
   if (usesConfigSnapshot(config)) {
-    await restoreConfigSnapshot(config);
+    try {
+      await restoreConfigSnapshot(config);
+    } catch (error) {
+      // Still remove the admins, but report the failed restore rather than anything the cleanup throws.
+      await removeWorkerAdmins(config).catch((cleanupError) => console.error('[e2e-core] Could not remove the per-worker admins:', cleanupError));
+      throw error;
+    }
+    await removeWorkerAdmins(config);
   }
 
   console.log('[e2e-core] Global teardown complete.');
