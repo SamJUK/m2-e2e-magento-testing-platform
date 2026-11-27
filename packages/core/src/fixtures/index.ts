@@ -3,11 +3,19 @@
  * SPDX-License-Identifier: OSL-3.0
  */
 
-import { test as base } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+import { test as base, type Request } from '@playwright/test';
 import { Mailpit } from '../helpers/mailpit';
 import { loadData, type MergedData } from '../data';
 
 export type { MergedData };
+
+interface RequestWindow {
+  label: string;
+  start: number;
+  end?: number;
+}
 
 export interface CoreFixtures {
   /**
@@ -20,6 +28,10 @@ export interface CoreFixtures {
    * Themes extend this fixture to inject their selector overrides before project overrides.
    */
   data: MergedData;
+  /** Requests the test's page sent to the store, for matching exception.log entries. Internal. */
+  requestLog: RequestWindow[];
+  /** Records when each test ran and what it requested, so teardown can name the cause of each exception. */
+  recordTestWindow: void;
 }
 
 /**
@@ -45,6 +57,49 @@ export const coreTest = base.extend<CoreFixtures>({
   data: async ({}, use) => {
     await use(loadData({ projectRoot: process.cwd() }));
   },
+
+  requestLog: async ({}, use) => {
+    await use([]);
+  },
+
+  // Only for tests that open a page, so API-only tests never start a browser.
+  context: async ({ context, requestLog, baseURL }, use) => {
+    if (process.env.E2E_TEST_WINDOWS) {
+      const store = baseURL ? new URL(baseURL).origin : undefined;
+      const open = new Map<Request, RequestWindow>();
+      const close = (request: Request) => {
+        const entry = open.get(request);
+        if (entry) entry.end = Date.now();
+        open.delete(request);
+      };
+      context.on('request', (request) => {
+        if (!['document', 'xhr', 'fetch'].includes(request.resourceType())) return;
+        const url = new URL(request.url());
+        // Only requests PHP serves: the store's own, minus files the web server sends itself.
+        if ((store && url.origin !== store) || /^\/(static|media)\//.test(url.pathname)) return;
+        const entry: RequestWindow = { label: `${request.method()} ${url.pathname}`, start: Date.now() };
+        requestLog.push(entry);
+        open.set(request, entry);
+      });
+      context.on('requestfinished', close);
+      context.on('requestfailed', close);
+    }
+    await use(context);
+  },
+
+  recordTestWindow: [
+    async ({ requestLog }, use, testInfo) => {
+      const start = Date.now();
+      await use();
+      const file = process.env.E2E_TEST_WINDOWS;
+      if (!file) return;
+      const end = Date.now();
+      const title = [`${path.basename(testInfo.file)}:${testInfo.line}`, ...testInfo.titlePath.slice(1)].join(' › ');
+      const requests = requestLog.map((r) => ({ ...r, end: r.end ?? end }));
+      fs.appendFileSync(file, `${JSON.stringify({ title, retry: testInfo.retry, start, end, requests })}\n`);
+    },
+    { auto: true },
+  ],
 });
 
 export type CoreTest = typeof coreTest;

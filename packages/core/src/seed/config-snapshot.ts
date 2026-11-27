@@ -18,8 +18,8 @@ import type { ProjectConfig } from '../config/schema';
  * `'none'` nothing did, so the store simply stayed that way.
  *
  * Reads and writes go through `shell.dbQuery` rather than `bin/magento
- * config:set`, for two reasons: `shell.exec` returns void, so a value cannot be
- * read back through it; and only SQL can express "this row did not exist
+ * config:set`, for two reasons: a custom `shell.exec` need not return its output,
+ * so a value cannot be relied on to read back through it; and only SQL can express "this row did not exist
  * before" — Magento ships no `config:unset`, so a CLI-based revert would leave
  * an explicit row where the store previously inherited a default.
  *

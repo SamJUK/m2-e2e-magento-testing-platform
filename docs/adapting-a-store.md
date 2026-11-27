@@ -61,7 +61,7 @@ db: {
 shell: wardenShell(projectRoot),   // or ddevShell(projectRoot)
 ```
 
-globalSetup dumps the DB **before** seeding; globalTeardown re-imports it and flushes caches, so seed config and all test data roll back. `wardenShell` / `ddevShell` presets wire all four hooks (`exec`, `dbDump`, `dbImport`, `dbQuery`) to the environment's CLI. Any other setup declares its own hooks on `shell`.
+globalSetup dumps the DB **before** seeding; globalTeardown re-imports it and flushes caches, so seed config and all test data roll back. `wardenShell` / `ddevShell` / `dockerComposeShell` presets wire all four hooks (`exec`, `dbDump`, `dbImport`, `dbQuery`) to the environment's CLI. Any other setup declares its own hooks on `shell`. A custom `exec` should return the command's stdout and not echo it when called with `{ quiet: true }`; one that returns nothing skips the check on `var/log/exception.log`, or fails the run when `failOnExceptions` is on.
 
 **Dirty-run guard:** after dumping, setup writes an `e2e_dirty_run` row to Magento's `flag` table; a completed restore removes it. If a run is killed before teardown, the next run **refuses to start** rather than overwrite the only clean restore point with a polluted database. The error tells you how to recover: import the existing dump, or clear the flag to accept current state. The guard needs the `dbQuery` hook; without it, it degrades to a warning.
 

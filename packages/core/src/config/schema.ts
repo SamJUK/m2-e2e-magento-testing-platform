@@ -14,8 +14,11 @@
 //   SSH:     exec: (cmd) => execa('ssh', ['user@host', cmd])
 //   Direct:  exec: (cmd) => execa('bash', ['-c', cmd], { cwd: '/var/www/html' })
 export interface ProjectShellHooks {
-  /** Run a command inside the Magento container/host (e.g. bin/magento …) */
-  exec?: (cmd: string) => Promise<void>;
+  /**
+   * Run a command inside the Magento container/host (e.g. bin/magento …). Return its stdout to let the
+   * platform read files such as var/log/exception.log; `quiet` asks for it not to be echoed as well.
+   */
+  exec?: (cmd: string, options?: { quiet?: boolean }) => Promise<string | void>;
   /** Dump the Magento database to a local file path */
   dbDump?: (outPath: string) => Promise<void>;
   /** Import a database from a local file path */
@@ -172,4 +175,9 @@ export interface ProjectConfig {
    * Example: [...DEFAULT_BLOCKED_HOSTS.filter((h) => h !== 'trustpilot.com'), 'acme-reviews.com']
    */
   blockedHosts?: string[];
+  /**
+   * Fail the run when the store adds to var/log/exception.log while the tests run.
+   * Off by default, when new entries are only printed. E2E_FAIL_ON_EXCEPTIONS=1 or 0 overrides it.
+   */
+  failOnExceptions?: boolean;
 }

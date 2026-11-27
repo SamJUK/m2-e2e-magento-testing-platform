@@ -13,6 +13,7 @@ import { assertStrategyHooksConfigured } from './db/strategy-hooks';
 import { assertSearchEngineReachable } from './health/search-engine';
 import { hasPendingConfigSnapshot, restoreConfigSnapshot } from './seed/config-snapshot';
 import { usesConfigSnapshot } from './seed/magento';
+import { assertExceptionCheckPossible, markExceptionLog } from './health/exception-log';
 
 /**
  * Call from your project's globalSetup.ts:
@@ -30,6 +31,7 @@ export async function runGlobalSetup(config: ProjectConfig, workers = 1): Promis
 
   // Free and instant, so ahead of the network check below.
   assertStrategyHooksConfigured(config);
+  assertExceptionCheckPossible(config);
 
   // A dead search engine does not stop the storefront serving, it just makes
   // every category and search test fail as a selector timeout. Checked before
@@ -77,6 +79,7 @@ export async function runGlobalSetup(config: ProjectConfig, workers = 1): Promis
   }
 
   await runSeed(config, workers);
+  await markExceptionLog(config);
 
   console.log('[e2e-core] Global setup complete.');
 }
