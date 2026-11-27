@@ -48,7 +48,7 @@ jobs:
       # publish` and inherits it.
       - uses: changesets/action@v1
         with:
-          version: pnpm changeset version
+          version: pnpm version-packages
           publish: pnpm changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
