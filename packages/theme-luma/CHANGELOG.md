@@ -1,5 +1,16 @@
 # @samjuk/e2e-m2-theme-luma
 
+## 0.6.0
+
+### Minor Changes
+
+- a4d5eb3: The admin product edit test recovers on retry. A failure between the rename and the restore left the product renamed, and the retry then failed at once on the starting name. **Breaking:** `AdminProductPage.renameProduct` drops its `currentName` argument and is now `renameProduct(searchTerm, newName, storefrontUrl)`. Update any four-argument calls. It renames from whatever name the product has, and the random part of the new name is what proves the rename took.
+
+### Patch Changes
+
+- Updated dependencies [a7dbe04]
+  - @samjuk/e2e-m2-playwright-core@0.6.0
+
 ## 0.5.0
 
 ### Patch Changes

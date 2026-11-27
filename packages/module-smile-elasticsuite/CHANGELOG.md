@@ -1,5 +1,12 @@
 # @samjuk/e2e-m2-module-smile-elasticsuite
 
+## 0.6.0
+
+### Patch Changes
+
+- Updated dependencies [a7dbe04]
+  - @samjuk/e2e-m2-playwright-core@0.6.0
+
 ## 0.5.0
 
 ### Patch Changes
