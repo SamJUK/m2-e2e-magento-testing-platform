@@ -42,7 +42,7 @@ export async function markExceptionLog(config: ProjectConfig): Promise<void> {
   if (!config.shell?.exec) return;
   let size: string;
   try {
-    const out = await config.shell.exec(`wc -c < ${LOG} 2>/dev/null || echo 0`, { quiet: true });
+    const out = await config.shell.exec(`wc -c 2>/dev/null < ${LOG} || echo 0`, { quiet: true });
     // The last line only: a DDEV or Warden shell can print a banner first.
     size = typeof out === 'string' ? (out.trim().split(/\r?\n/).pop()?.trim() ?? '') : 'nothing: this shell.exec does not return its output';
   } catch (error) {
